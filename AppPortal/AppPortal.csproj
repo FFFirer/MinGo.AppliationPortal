@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <Target Name="TailwindBuild" BeforeTargets="Build">
-    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css --minify" Condition="'$(Configuration)'=='Release'" />
-    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css" Condition="'$(Configuration)'!='Release'" />
+    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css --minify" Condition="'$(Configuration)'=='Release' And !Exists('wwwroot/css/app.css')" />
+    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css" Condition="'$(Configuration)'!='Release' And !Exists('wwwroot/css/app.css')" />
   </Target>
 
 </Project>

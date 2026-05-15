@@ -1,0 +1,17 @@
+services:
+  app-portal:
+    image: ${REGISTRY_URL:-registry.example.com}/${GITEA_REPOSITORY:-minGo.appliationportal}:latest
+    build:
+      context: .
+    container_name: app-portal
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - LiteDb__Path=/data/AppPortal.db
+    volumes:
+      - app-portal-data:/data
+    restart: unless-stopped
+
+volumes:
+  app-portal-data:

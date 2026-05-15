@@ -1,0 +1,42 @@
+## ADDED Requirements
+
+### Requirement: Dockerfile 实现多阶段构建
+项目根目录 SHALL 包含一个 `Dockerfile`，实现多阶段构建，最终产出基于 `mcr.microsoft.com/dotnet/aspnet:10.0` 的精简运行时镜像。
+
+#### Scenario: 多阶段构建流程
+- **WHEN** 执行 `docker build`
+- **THEN** build 阶段使用 `mcr.microsoft.com/dotnet/sdk:10.0` 镜像执行 `dotnet restore` 和 `dotnet publish -c Release`
+- **THEN** final 阶段使用 `mcr.microsoft.com/dotnet/aspnet:10.0` 镜像，仅复制 publish 产物
+- **THEN** 最终镜像不包含 .NET SDK 和 Node.js
+
+#### Scenario: Dockerfile 不包含 Node.js/Tailwind 构建
+- **WHEN** 执行 `docker build`
+- **THEN** Dockerfile 中不应包含 `npm` 或 `npx` 命令
+- **THEN** Tailwind CSS 文件 (`wwwroot/css/app.css`) 预期在构建前已存在
+
+### Requirement: 容器内 Kestrel 配置
+容器内的 Kestrel SHALL 监听 `http://+:8080`，不处理 HTTPS。
+
+#### Scenario: 默认端口为 8080
+- **WHEN** 容器启动
+- **THEN** `ASPNETCORE_URLS` 环境变量设为 `http://+:8080`
+- **THEN** 应用通过 `http://localhost:8080` 可访问
+
+### Requirement: 环境变量配置数据库路径
+LiteDB 数据库路径 SHALL 通过环境变量 `LiteDb__Path` 配置，默认值为 `/data/AppPortal.db`。
+
+#### Scenario: 环境变量覆盖数据库路径
+- **WHEN** 容器设置环境变量 `LiteDb__Path=/data/AppPortal.db`
+- **THEN** LiteDB 在 `/data/` 目录创建 `AppPortal.db` 文件
+
+### Requirement: 项目文件修改
+`AppPortal.csproj` 中的 `TailwindBuild` Target SHALL 增加条件，当 `wwwroot/css/app.css` 已存在时跳过执行。
+
+#### Scenario: CSS 文件已存在时跳过 Tailwind 构建
+- **WHEN** CI 构建前已预编译了 CSS（`wwwroot/css/app.css` 存在）
+- **THEN** `dotnet build` 跳过 TailwindBuild target
+- **THEN** 构建成功不报错
+
+#### Scenario: CSS 文件不存在时正常执行 Tailwind 构建
+- **WHEN** 本地开发环境 `wwwroot/css/app.css` 不存在
+- **THEN** `dotnet build` 正常执行 `npx tailwindcss` 编译 CSS
