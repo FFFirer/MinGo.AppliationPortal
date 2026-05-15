@@ -1,0 +1,19 @@
+{
+  "name": "appportal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "css:build": "tailwindcss -i Styles/app.css -o wwwroot/css/app.css",
+    "css:watch": "tailwindcss -i Styles/app.css -o wwwroot/css/app.css --watch",
+    "css:prod": "tailwindcss -i Styles/app.css -o wwwroot/css/app.css --minify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.0",
+    "tailwindcss": "^4.3.0"
+  }
+}

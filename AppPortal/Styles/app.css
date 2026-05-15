@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+/* Scan Razor Pages and Views for Tailwind class names */
+@source "../Pages";
+@source "../Views";

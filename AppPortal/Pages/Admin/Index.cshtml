@@ -1,0 +1,101 @@
+﻿@page
+@model AppPortal.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "管理后台";
+}
+
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">应用管理</h1>
+        <p class="text-sm text-gray-500 mt-1">维护应用列表，管理启用/禁用状态</p>
+    </div>
+    <a class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium" asp-page="Create">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        新增应用
+    </a>
+</div>
+
+@if (Model.Apps.Count == 0)
+{
+    <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
+        <div class="text-5xl mb-3">📦</div>
+        <p class="text-gray-500">暂无应用，点击"新增应用"开始添加</p>
+    </div>
+}
+else
+{
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200">
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">名称</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">地址数</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">排序</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">状态</th>
+                        <th class="text-right px-4 py-3 font-medium text-gray-600">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach (var app in Model.Apps)
+                    {
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    @if (!string.IsNullOrEmpty(app.IconUrl))
+                                    {
+                                        <img src="@app.IconUrl" alt="" class="w-8 h-8 rounded object-contain" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center text-xs font-bold text-blue-600">
+                                            @app.Name[..1]
+                                        </div>
+                                    }
+                                    <div>
+                                        <div class="font-medium text-gray-900">@app.Name</div>
+                                        @if (!string.IsNullOrEmpty(app.Description))
+                                        {
+                                            <div class="text-xs text-gray-400 truncate max-w-[200px]">@app.Description</div>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-gray-600">@app.Urls.Count 个</td>
+                            <td class="px-4 py-3 text-gray-600">@app.SortOrder</td>
+                            <td class="px-4 py-3">
+                                @if (app.IsEnabled)
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                        启用
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                        禁用
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <form method="post" asp-page-handler="Toggle" asp-route-id="@app.Id" class="inline">
+                                        <button type="submit" class="text-xs px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600">
+                                            @(app.IsEnabled ? "禁用" : "启用")
+                                        </button>
+                                    </form>
+                                    <a class="text-xs px-3 py-1.5 rounded-md border border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors text-gray-600" asp-page="Edit" asp-route-id="@app.Id">编辑</a>
+                                    <a class="text-xs px-3 py-1.5 rounded-md border border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors text-red-500" asp-page="Delete" asp-route-id="@app.Id">删除</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

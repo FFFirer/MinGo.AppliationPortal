@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 应用门户</title>
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <header>
+        <nav class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <a class="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors" asp-page="/Index">🚀 应用门户</a>
+                    <div class="flex items-center gap-4">
+                        <a class="text-sm text-gray-600 hover:text-blue-600 transition-colors" asp-page="/Index">首页</a>
+                        <a class="text-sm text-gray-600 hover:text-blue-600 transition-colors" asp-page="/Admin/Index">管理后台</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+            &copy; @DateTime.Now.Year 应用门户 — All Rights Reserved
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

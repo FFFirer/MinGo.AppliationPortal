@@ -1,0 +1,22 @@
+# .NET
+AppPortal/bin/
+AppPortal/obj/
+*.user
+*.suo
+
+# Node
+AppPortal/node_modules/
+
+# Database
+*.db
+AppPortal/*.db
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store

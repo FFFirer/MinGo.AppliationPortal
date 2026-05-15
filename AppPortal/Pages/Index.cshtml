@@ -1,0 +1,63 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "首页";
+}
+
+@if (Model.Apps.Count == 0)
+{
+    <div class="text-center py-20">
+        <div class="text-6xl mb-4">📋</div>
+        <h2 class="text-2xl font-semibold text-gray-700 mb-2">暂无可用应用</h2>
+        <p class="text-gray-500 mb-6">当前没有已启用的应用，请联系管理员。</p>
+        <a class="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium" asp-page="/Admin/Index">前往管理后台</a>
+    </div>
+}
+else
+{
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">应用中心</h1>
+        <p class="text-gray-500 mt-1">选择一个应用开始使用</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        @foreach (var app in Model.Apps)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow p-6 flex flex-col">
+                @if (!string.IsNullOrEmpty(app.IconUrl))
+                {
+                    <div class="mb-4">
+                        <img src="@app.IconUrl" alt="@app.Name" class="w-12 h-12 object-contain" />
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-4 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-xl text-blue-600 font-bold">
+                        @app.Name[..1]
+                    </div>
+                }
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">@app.Name</h3>
+                @if (!string.IsNullOrEmpty(app.Description))
+                {
+                    <p class="text-sm text-gray-500 mb-4 line-clamp-2">@app.Description</p>
+                }
+
+                <div class="mt-auto space-y-2">
+                    @foreach (var url in app.Urls)
+                    {
+                        <a href="@url.Url"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors py-1 px-3 rounded-md hover:bg-blue-50">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            <span>@(string.IsNullOrEmpty(url.DisplayName) ? url.Url : url.DisplayName)</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

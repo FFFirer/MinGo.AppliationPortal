@@ -1,0 +1,58 @@
+﻿@page "{id}"
+@model AppPortal.Pages.Admin.DeleteModel
+@{
+    ViewData["Title"] = "删除应用";
+}
+
+<div class="max-w-lg mx-auto">
+    <div class="mb-6">
+        <a class="text-sm text-blue-600 hover:text-blue-800 transition-colors" asp-page="Index">&larr; 返回管理列表</a>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h1 class="text-xl font-bold text-gray-900 mb-2">确认删除</h1>
+        <p class="text-sm text-gray-500 mb-6">此操作不可恢复，请确认是否删除以下应用：</p>
+
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <div class="flex items-center gap-3 mb-3">
+                @if (!string.IsNullOrEmpty(Model.App?.IconUrl))
+                {
+                    <img src="@Model.App.IconUrl" alt="" class="w-10 h-10 rounded object-contain" />
+                }
+                else
+                {
+                    <div class="w-10 h-10 bg-blue-100 rounded flex items-center justify-center text-sm font-bold text-blue-600">
+                        @(Model.App?.Name?[..1] ?? "?")
+                    </div>
+                }
+                <div>
+                    <div class="font-medium text-gray-900">@Model.App?.Name</div>
+                    @if (!string.IsNullOrEmpty(Model.App?.Description))
+                    {
+                        <div class="text-xs text-gray-500">@Model.App.Description</div>
+                    }
+                </div>
+            </div>
+            <div class="text-xs text-gray-500">
+                <span class="font-medium">地址数：</span>@Model.App?.Urls.Count 个
+                <span class="ml-4 font-medium">排序：</span>@Model.App?.SortOrder
+                <span class="ml-4 font-medium">状态：</span>
+                @if (Model.App?.IsEnabled == true)
+                {
+                    <span class="text-green-600">启用</span>
+                }
+                else
+                {
+                    <span class="text-gray-400">禁用</span>
+                }
+            </div>
+        </div>
+
+        <form method="post">
+            <div class="flex items-center gap-3">
+                <button type="submit" class="bg-red-600 text-white px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">确认删除</button>
+                <a class="text-sm text-gray-600 hover:text-gray-900 transition-colors" asp-page="Index">取消</a>
+            </div>
+        </form>
+    </div>
+</div>

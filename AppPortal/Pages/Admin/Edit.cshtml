@@ -1,0 +1,126 @@
+﻿@page "{id}"
+@model AppPortal.Pages.Admin.EditModel
+@{
+    ViewData["Title"] = "编辑应用";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a class="text-sm text-blue-600 hover:text-blue-800 transition-colors" asp-page="Index">&larr; 返回管理列表</a>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h1 class="text-xl font-bold text-gray-900 mb-6">编辑应用</h1>
+
+        <form method="post">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.Name">应用名称 *</label>
+                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow @(ModelState["App.Name"]?.Errors.Count > 0 ? "border-red-500" : "")" asp-for="App.Name" />
+                    <span class="text-xs text-red-500" asp-validation-for="App.Name"></span>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.Description">描述</label>
+                    <textarea class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" asp-for="App.Description" rows="3"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.IconUrl">图标地址</label>
+                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" asp-for="App.IconUrl" placeholder="https://example.com/icon.png" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.SortOrder">排序</label>
+                    <input class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" asp-for="App.SortOrder" type="number" min="0" />
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm font-medium text-gray-700">访问地址 *</label>
+                        <button type="button" id="btnAddUrl" class="text-xs text-blue-600 hover:text-blue-800 transition-colors">+ 添加地址</button>
+                    </div>
+                    <div id="urlList" class="space-y-2">
+                        @for (var i = 0; i < Model.App.Urls.Count; i++)
+                        {
+                            <div class="url-row flex gap-2 items-start">
+                                <div class="flex-1">
+                                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[@i].Url" value="@Model.App.Urls[i].Url" placeholder="https://example.com" />
+                                </div>
+                                <div class="w-36">
+                                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[@i].DisplayName" value="@Model.App.Urls[i].DisplayName" placeholder="显示名称" />
+                                </div>
+                                <button type="button" class="btn-remove-url p-2 text-gray-400 hover:text-red-500 transition-colors" title="删除">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    <span class="text-xs text-red-500" asp-validation-for="App.Urls"></span>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">保存</button>
+                    <a class="text-sm text-gray-600 hover:text-gray-900 transition-colors" asp-page="Index">取消</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var index = @Model.App.Urls.Count;
+
+            document.getElementById('btnAddUrl').addEventListener('click', function () {
+                var list = document.getElementById('urlList');
+                var div = document.createElement('div');
+                div.className = 'url-row flex gap-2 items-start';
+                div.innerHTML = [
+                    '<div class="flex-1">',
+                    '<input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[' + index + '].Url" placeholder="https://example.com" />',
+                    '</div>',
+                    '<div class="w-36">',
+                    '<input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[' + index + '].DisplayName" placeholder="显示名称" />',
+                    '</div>',
+                    '<button type="button" class="btn-remove-url p-2 text-gray-400 hover:text-red-500 transition-colors" title="删除">',
+                    '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">',
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />',
+                    '</svg>',
+                    '</button>'
+                ].join('');
+                list.appendChild(div);
+                index++;
+                attachRemoveHandlers();
+            });
+
+            function attachRemoveHandlers() {
+                document.querySelectorAll('.btn-remove-url').forEach(function (btn) {
+                    btn.removeEventListener('click', removeHandler);
+                    btn.addEventListener('click', removeHandler);
+                });
+            }
+
+            function removeHandler(e) {
+                var row = this.closest('.url-row');
+                if (document.querySelectorAll('.url-row').length > 1) {
+                    row.remove();
+                    reindexUrls();
+                }
+            }
+
+            function reindexUrls() {
+                document.querySelectorAll('.url-row').forEach(function (row, i) {
+                    var inputs = row.querySelectorAll('input');
+                    inputs[0].name = 'App.Urls[' + i + '].Url';
+                    inputs[1].name = 'App.Urls[' + i + '].DisplayName';
+                });
+            }
+
+            attachRemoveHandlers();
+        });
+    </script>
+}
