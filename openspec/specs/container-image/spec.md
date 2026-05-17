@@ -1,22 +1,23 @@
 ## Purpose
 
-定义 MinGo AppliationPortal 的 Docker 容器镜像构建规范。基于多阶段构建，在 CI 预编译 Tailwind CSS 后使用 .NET SDK 编译发布，最终产出精简的 ASP.NET runtime 镜像。
+定义 MinGo AppliationPortal 的 Docker 容器镜像构建规范。基于三阶段构建，在 Dockerfile 内部编译 Tailwind CSS 后使用 .NET SDK 编译发布，最终产出精简的 ASP.NET runtime 镜像。
 
 ## Requirements
 
 ### Requirement: Dockerfile 实现多阶段构建
 项目根目录 SHALL 包含一个 `Dockerfile`，实现多阶段构建，最终产出基于 `mcr.microsoft.com/dotnet/aspnet:10.0` 的精简运行时镜像。
 
-#### Scenario: 多阶段构建流程
+#### Scenario: 三阶段构建流程
 - **WHEN** 执行 `docker build`
+- **THEN** frontend-build 阶段使用 `node:22-alpine` 镜像执行 `npm ci` 和 `npm run css:prod` 编译 Tailwind CSS
 - **THEN** build 阶段使用 `mcr.microsoft.com/dotnet/sdk:10.0` 镜像执行 `dotnet restore` 和 `dotnet publish -c Release`
-- **THEN** final 阶段使用 `mcr.microsoft.com/dotnet/aspnet:10.0` 镜像，仅复制 publish 产物
-- **THEN** 最终镜像不包含 .NET SDK 和 Node.js
+- **THEN** final 阶段使用 `mcr.microsoft.com/dotnet/aspnet:10.0` 镜像，仅复制 publish 产物和前端构建产物
+- **THEN** 最终镜像不包含 .NET SDK
 
-#### Scenario: Dockerfile 不包含 Node.js/Tailwind 构建
-- **WHEN** 执行 `docker build`
-- **THEN** Dockerfile 中不应包含 `npm` 或 `npx` 命令
-- **THEN** Tailwind CSS 文件 (`wwwroot/css/app.css`) 预期在构建前已存在
+#### Scenario: 前端构建产物流入
+- **WHEN** frontend-build 阶段完成
+- **THEN** `wwwroot/css/app.css` 被复制到 build 阶段
+- **THEN** dotnet publish 自动包含该 CSS 文件到发布产物
 
 ### Requirement: 容器内 Kestrel 配置
 容器内的 Kestrel SHALL 监听 `http://+:8080`，不处理 HTTPS。

@@ -1,6 +1,6 @@
 services:
   app-portal:
-    image: ${REGISTRY_URL:-registry.example.com}/${GITEA_REPOSITORY:-minGo.appliationportal}:latest
+    image: ${CONTAINER_REGISTRY:-registry.example.com}/${IMAGE_NAME:-mingo-appliationportal}:latest
     build:
       context: .
     container_name: app-portal

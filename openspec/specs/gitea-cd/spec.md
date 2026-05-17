@@ -29,19 +29,6 @@
 - **WHEN** 用户推送代码到任意分支（无 tag）
 - **THEN** 工作流不启动
 
-### Requirement: Tailwind CSS 预编译
-工作流 SHALL 在 Docker 构建前，使用 Node.js 环境预编译 Tailwind CSS。
-
-#### Scenario: Node.js 环境配置
-- **WHEN** 工作流运行
-- **THEN** 使用 `actions/setup-node@v4` 配置 Node.js 22
-- **THEN** 在 `AppPortal/` 目录执行 `npm ci` 安装依赖
-
-#### Scenario: CSS 编译
-- **WHEN** npm 依赖安装完成
-- **THEN** 在 `AppPortal/` 目录执行 `npm run css:prod` 编译生产 CSS
-- **THEN** `AppPortal/wwwroot/css/app.css` 被生成或更新
-
 ### Requirement: Docker 镜像构建与推送
 工作流 SHALL 使用 Docker BuildX 构建多平台镜像并推送到私有 Registry。
 
@@ -53,13 +40,16 @@
 #### Scenario: 登录私有 Registry
 - **WHEN** 构建镜像前
 - **THEN** 使用 `docker/login-action@v3` 登录私有 Registry
-- **THEN** 登录凭据从 Gitea Secrets 读取：`REGISTRY_URL`, `REGISTRY_USER`, `REGISTRY_PASSWORD`
+- **THEN** Registry 地址从 Gitea Variables 读取：`vars.DOCKER_REGISTRY`
+- **THEN** 用户名从 Gitea Variables 读取：`vars.DOCKER_USERNAME`
+- **THEN** 密码从 Gitea Secrets 读取：`secrets.DOCKER_PASSWORD`
 
 #### Scenario: 构建并推送镜像
 - **WHEN** 登录成功
 - **THEN** 使用 `docker/build-push-action@v6` 构建并推送镜像
 - **THEN** `push: true` 确保镜像推送到 Registry
 - **THEN** 使用 `context: .` 使用项目根目录作为构建上下文
+- **THEN** 前端构建（Tailwind CSS）在 Dockerfile 内部由 frontend-build 阶段处理
 
 ### Requirement: 镜像标签策略
 工作流 SHALL 使用 `docker/metadata-action@v5` 生成镜像标签，遵循 latest + semver 策略。
