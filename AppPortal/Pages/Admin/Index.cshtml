@@ -17,6 +17,11 @@
     </a>
 </div>
 
+@if (TempData["Error"] is string errorMsg)
+{
+    <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm mb-4">@errorMsg</div>
+}
+
 @if (Model.Apps.Count == 0)
 {
     <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
@@ -89,7 +94,10 @@ else
                                         </button>
                                     </form>
                                     <a class="text-xs px-3 py-1.5 rounded-md border border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors text-gray-600" asp-page="Edit" asp-route-id="@app.Id">编辑</a>
-                                    <a class="text-xs px-3 py-1.5 rounded-md border border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors text-red-500" asp-page="Delete" asp-route-id="@app.Id">删除</a>
+                                    @if (!app.IsEnabled)
+                                    {
+                                        <a class="text-xs px-3 py-1.5 rounded-md border border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors text-red-500" asp-page="Delete" asp-route-id="@app.Id">删除</a>
+                                    }
                                 </div>
                             </td>
                         </tr>

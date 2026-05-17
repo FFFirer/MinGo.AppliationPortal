@@ -24,11 +24,26 @@ public class DeleteModel : PageModel
         {
             return NotFound();
         }
+        if (App.IsEnabled)
+        {
+            TempData["Error"] = "仅已禁用的应用可以删除";
+            return RedirectToPage("Index");
+        }
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(ObjectId id)
     {
+        var app = await _appService.GetByIdAsync(id);
+        if (app is null)
+        {
+            return NotFound();
+        }
+        if (app.IsEnabled)
+        {
+            TempData["Error"] = "仅已禁用的应用可以删除";
+            return RedirectToPage("Index");
+        }
         await _appService.DeleteAsync(id);
         return RedirectToPage("Index");
     }
