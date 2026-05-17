@@ -22,9 +22,13 @@ public class IndexModel : PageModel
         Apps = await _appService.GetAllAppsAsync();
     }
 
-    public async Task<IActionResult> OnPostToggleAsync(ObjectId id)
+    public async Task<IActionResult> OnPostToggleAsync(string id)
     {
-        await _appService.ToggleEnabledAsync(id);
+        ObjectId oid;
+        try { oid = new ObjectId(id); }
+        catch { return NotFound(); }
+
+        await _appService.ToggleEnabledAsync(oid);
         return RedirectToPage();
     }
 }

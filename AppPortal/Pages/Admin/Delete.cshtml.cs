@@ -17,9 +17,13 @@ public class DeleteModel : PageModel
         _appService = appService;
     }
 
-    public async Task<IActionResult> OnGetAsync(ObjectId id)
+    public async Task<IActionResult> OnGetAsync(string id)
     {
-        App = await _appService.GetByIdAsync(id);
+        ObjectId oid;
+        try { oid = new ObjectId(id); }
+        catch { return NotFound(); }
+
+        App = await _appService.GetByIdAsync(oid);
         if (App is null)
         {
             return NotFound();
@@ -32,9 +36,13 @@ public class DeleteModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(ObjectId id)
+    public async Task<IActionResult> OnPostAsync(string id)
     {
-        var app = await _appService.GetByIdAsync(id);
+        ObjectId oid;
+        try { oid = new ObjectId(id); }
+        catch { return NotFound(); }
+
+        var app = await _appService.GetByIdAsync(oid);
         if (app is null)
         {
             return NotFound();
@@ -44,7 +52,7 @@ public class DeleteModel : PageModel
             TempData["Error"] = "仅已禁用的应用可以删除";
             return RedirectToPage("Index");
         }
-        await _appService.DeleteAsync(id);
+        await _appService.DeleteAsync(oid);
         return RedirectToPage("Index");
     }
 }

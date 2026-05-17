@@ -18,9 +18,13 @@ public class EditModel : PageModel
         _appService = appService;
     }
 
-    public async Task<IActionResult> OnGetAsync(ObjectId id)
+    public async Task<IActionResult> OnGetAsync(string id)
     {
-        var app = await _appService.GetByIdAsync(id);
+        ObjectId oid;
+        try { oid = new ObjectId(id); }
+        catch { return NotFound(); }
+
+        var app = await _appService.GetByIdAsync(oid);
         if (app is null)
         {
             return NotFound();
@@ -29,8 +33,12 @@ public class EditModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(ObjectId id)
+    public async Task<IActionResult> OnPostAsync(string id)
     {
+        ObjectId oid;
+        try { oid = new ObjectId(id); }
+        catch { return NotFound(); }
+
         if (string.IsNullOrWhiteSpace(App.Name))
         {
             ModelState.AddModelError("App.Name", "应用名称不能为空");
@@ -49,7 +57,7 @@ public class EditModel : PageModel
         }
 
         App.Urls = validUrls;
-        App.Id = id;
+        App.Id = oid;
         await _appService.UpdateAsync(App);
         return RedirectToPage("Index");
     }
