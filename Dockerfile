@@ -1,5 +1,5 @@
 # 第一阶段：构建前端 (Tailwind CSS)
-FROM node:22-alpine AS frontend-build
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:20-alpine AS frontend-build
 WORKDIR /app
 
 # 复制依赖文件，利用 Docker 层缓存

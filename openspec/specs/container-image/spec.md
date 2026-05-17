@@ -9,7 +9,7 @@
 
 #### Scenario: 三阶段构建流程
 - **WHEN** 执行 `docker build`
-- **THEN** frontend-build 阶段使用 `node:22-alpine` 镜像执行 `npm ci` 和 `npm run css:prod` 编译 Tailwind CSS
+- **THEN** frontend-build 阶段使用 `swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:20-alpine` 镜像执行 `npm ci` 和 `npm run css:prod` 编译 Tailwind CSS
 - **THEN** build 阶段使用 `mcr.microsoft.com/dotnet/sdk:10.0` 镜像执行 `dotnet restore` 和 `dotnet publish -c Release`
 - **THEN** final 阶段使用 `mcr.microsoft.com/dotnet/aspnet:10.0` 镜像，仅复制 publish 产物和前端构建产物
 - **THEN** 最终镜像不包含 .NET SDK
