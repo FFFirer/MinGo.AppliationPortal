@@ -37,7 +37,7 @@ else
                     </div>
                 }
 
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">@app.Name</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1 truncate" title="@app.Name">@app.Name</h3>
                 @if (!string.IsNullOrEmpty(app.Description))
                 {
                     <p class="text-sm text-gray-500 mb-4 line-clamp-2">@app.Description</p>
