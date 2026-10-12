@@ -78,8 +78,8 @@
                                                        value="@mod.Addresses[ai]"
                                                        placeholder="http://10.0.0.5:8080/admin"
                                                        data-url-input />
-                                                <button type="button" class="btn-copy-addr text-gray-400 hover:text-blue-600 p-1 shrink-0" title="复制此行">
-                                                    <svg class="icon icon-sm"><use href="#i-plus"></use></svg>
+                                                <button type="button" class="btn-copy-addr text-gray-400 hover:text-blue-600 p-1 shrink-0" title="复制">
+                                                    <svg class="icon icon-sm"><use href="#i-copy"></use></svg>
                                                 </button>
                                                 <button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 shrink-0">
                                                     <svg class="icon icon-sm"><use href="#i-x"></use></svg>
@@ -211,7 +211,7 @@
             function rowHtml(mi, ai, val) {
                 return [
                     '<input class="input !py-1.5 !text-sm !min-w-0 !shrink" name="App.Modules[' + mi + '].Addresses[' + ai + ']" value="' + (val || '').replace(/"/g, '&quot;') + '" placeholder="http://10.0.0.5:8080/admin" data-url-input />',
-                    '<button type="button" class="btn-copy-addr text-gray-400 hover:text-blue-600 p-1 shrink-0" title="复制此行"><svg class="icon icon-sm"><use href="#i-copy"></use></svg></button>',
+                    '<button type="button" class="btn-copy-addr text-gray-400 hover:text-blue-600 p-1 shrink-0" title="复制"><svg class="icon icon-sm"><use href="#i-copy"></use></svg></button>',
                     '<button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 shrink-0"><svg class="icon icon-sm"><use href="#i-x"></use></svg></button>'
                 ].join('');
             }
