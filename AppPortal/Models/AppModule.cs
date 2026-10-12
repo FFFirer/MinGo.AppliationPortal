@@ -10,19 +10,19 @@ public class AppModule
     public int Order { get; set; }
     public string? SourceService { get; set; }
 
-    /// <summary>Optional host group; helps fill address suggestions.</summary>
-    public ObjectId? HostId { get; set; }
-
-    /// <summary>One URL row per address.</summary>
+    /// <summary>One URL row per address; host is chosen inside each row.</summary>
     public List<ModuleAddress> Addresses { get; set; } = new();
 }
 
 /// <summary>
 /// One access address under a module, laid out as a URL:
-/// scheme://address[:port][/path]. Port and path are optional.
+/// [Host] scheme://address[:port][/path]. Port and path are optional.
 /// </summary>
 public class ModuleAddress
 {
+    /// <summary>Optional host group this address belongs to.</summary>
+    public ObjectId? HostId { get; set; }
+
     /// <summary>http or https</summary>
     public string Scheme { get; set; } = "http";
 

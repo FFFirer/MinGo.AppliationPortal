@@ -450,3 +450,25 @@ svg.hidden {
 .btn-danger {
   white-space: nowrap;
 }
+
+@layer components {
+  /* URL-style address row: keep four inputs on one line */
+  .addr-row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.375rem;
+    overflow-x: auto;
+  }
+
+  .addr-row .input,
+  .addr-row .select {
+    min-width: 0;
+  }
+
+  .addr-row .sep {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+}

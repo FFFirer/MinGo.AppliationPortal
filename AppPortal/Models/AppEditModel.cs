@@ -37,11 +37,11 @@ public class AppEditModel
                     IsEnabled = m.IsEnabled,
                     Order = m.Order == 0 ? i : m.Order,
                     SourceService = m.SourceService,
-                    HostId = m.HostId,
-                    Addresses = (m.Addresses ?? new List<ModuleAddress>())
+                                        Addresses = (m.Addresses ?? new List<ModuleAddress>())
                         .Where(a => !string.IsNullOrWhiteSpace(a.Address))
                         .Select(a => new ModuleAddress
                         {
+                            HostId = a.HostId,
                             Scheme = string.Equals(a.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http",
                             Address = a.Address.Trim(),
                             Port = a.Port is > 0 ? a.Port : null,
@@ -71,8 +71,7 @@ public class AppEditModel
                     IsEnabled = m.IsEnabled,
                     Order = m.Order,
                     SourceService = m.SourceService,
-                    HostId = m.HostId,
-                    Addresses = m.Addresses.ToList()
+                                        Addresses = m.Addresses.ToList()
                 })
                 .ToList()
         };

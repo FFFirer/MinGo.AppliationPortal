@@ -41,7 +41,7 @@
                             <svg class="icon icon-sm"><use href="#i-plus"></use></svg>添加模块
                         </button>
                     </div>
-                    <p class="field-hint mb-3">应用下可挂多个模块；每个模块下多行地址，按 URL 拆成 协议 · 地址 · 端口(可选) · 路径(可选)。</p>
+                    <p class="field-hint mb-3">应用下可挂多个模块；每个地址一行，Host / 协议 / 地址 / 端口(可选) / 路径(可选) 都在行内。</p>
 
                     <div id="moduleList" class="space-y-4">
                         @for (var mi = 0; mi < Model.App.Modules.Count; mi++)
@@ -61,21 +61,6 @@
                                     </button>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label class="field-label !text-xs">关联 Host（可选，用于地址建议）</label>
-                                    <select class="select" name="App.Modules[@mi].HostId" data-host-select>
-                                        <option value="">— 不关联 —</option>
-                                        @foreach (var h in Model.Hosts)
-                                        {
-                                            <option value="@h.Id"
-                                                    data-addresses="@string.Join("|", h.Addresses)"
-                                                    selected="@(mod.HostId == h.Id)">
-                                                @h.Name (@h.Addresses.Count 个地址)
-                                            </option>
-                                        }
-                                    </select>
-                                </div>
-
                                 <div>
                                     <div class="flex items-center justify-between mb-2">
                                         <span class="text-xs font-medium text-gray-500">地址（一行一个）</span>
@@ -85,17 +70,28 @@
                                         @for (var ai = 0; ai < mod.Addresses.Count; ai++)
                                         {
                                             var addr = mod.Addresses[ai];
-                                            <div class="addr-row flex flex-wrap items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2.5 py-2">
-                                                <select class="select !w-auto !py-1.5 !px-2 !text-sm" name="App.Modules[@mi].Addresses[@ai].Scheme">
+                                            <div class="addr-row">
+                                                <select class="select !w-28 !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].HostId" data-host-select>
+                                                    <option value="">Host…</option>
+                                                    @foreach (var h in Model.Hosts)
+                                                    {
+                                                        <option value="@h.Id"
+                                                                data-addresses="@string.Join("|", h.Addresses)"
+                                                                selected="@(addr.HostId == h.Id)">
+                                                            @h.Name
+                                                        </option>
+                                                    }
+                                                </select>
+                                                <select class="select !w-[4.5rem] !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].Scheme">
                                                     <option value="http" selected="@(addr.Scheme != "https")">http</option>
                                                     <option value="https" selected="@(addr.Scheme == "https")">https</option>
                                                 </select>
-                                                <span class="text-gray-400 text-sm">://</span>
-                                                <input class="input !w-36 !py-1.5 !text-sm" name="App.Modules[@mi].Addresses[@ai].Address" value="@addr.Address" placeholder="10.0.0.5" />
-                                                <span class="text-gray-400 text-sm">:</span>
-                                                <input class="input !w-20 !py-1.5 !text-sm" name="App.Modules[@mi].Addresses[@ai].Port" value="@addr.Port" type="number" min="1" placeholder="端口" />
-                                                <span class="text-gray-400 text-sm">/</span>
-                                                <input class="input !w-28 !py-1.5 !text-sm" name="App.Modules[@mi].Addresses[@ai].Path" value="@addr.Path" placeholder="路径(可选)" />
+                                                <span class="sep">://</span>
+                                                <input class="input !w-28 !py-1.5 !text-sm !min-w-0 !shrink" name="App.Modules[@mi].Addresses[@ai].Address" value="@addr.Address" placeholder="10.0.0.5" />
+                                                <span class="sep">:</span>
+                                                <input class="input !w-16 !py-1.5 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].Port" value="@addr.Port" type="number" min="1" placeholder="端口" />
+                                                <span class="sep">/</span>
+                                                <input class="input !w-20 !py-1.5 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].Path" value="@addr.Path" placeholder="路径(可选)" />
                                                 <button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 ml-auto">
                                                     <svg class="icon icon-sm"><use href="#i-x"></use></svg>
                                                 </button>
@@ -121,6 +117,35 @@
 @section Scripts {
     <script>
         (function () {
+            function hostOptions(mi) {
+                var hosts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Hosts.Select(h => new {
+                    id = h.Id.ToString(),
+                    name = h.Name,
+                    addresses = string.Join("|", h.Addresses)
+                })));
+                return ['<option value="">Host…</option>'].concat(hosts.map(function (h) {
+                    return '<option value="' + h.id + '" data-addresses="' + h.addresses + '">' + h.name + '</option>';
+                })).join('');
+            }
+
+            function addrRowHtml(mi, ai) {
+                return [
+                    '<select class="select !w-28 !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].HostId" data-host-select>',
+                    hostOptions(mi),
+                    '</select>',
+                    '<select class="select !w-[4.5rem] !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].Scheme">',
+                    '<option value="http">http</option><option value="https">https</option></select>',
+                    '<span class="sep">://</span>',
+                    '<input class="input !w-28 !py-1.5 !text-sm !min-w-0 !shrink" name="App.Modules[' + mi + '].Addresses[' + ai + '].Address" placeholder="10.0.0.5" />',
+                    '<span class="sep">:</span>',
+                    '<input class="input !w-16 !py-1.5 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].Port" type="number" min="1" placeholder="端口" />',
+                    '<span class="sep">/</span>',
+                    '<input class="input !w-20 !py-1.5 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].Path" placeholder="路径(可选)" />',
+                    '<button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 ml-auto">',
+                    '<svg class="icon icon-sm"><use href="#i-x"></use></svg></button>'
+                ].join('');
+            }
+
             function reindex() {
                 document.querySelectorAll('.module-block').forEach(function (mod, mi) {
                     mod.querySelectorAll('input,select').forEach(function (el) {
@@ -134,21 +159,6 @@
                         });
                     });
                 });
-            }
-
-            function addrRowHtml(mi, ai) {
-                return [
-                    '<select class="select !w-auto !py-1.5 !px-2 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Scheme">',
-                    '<option value="http">http</option><option value="https">https</option></select>',
-                    '<span class="text-gray-400 text-sm">://</span>',
-                    '<input class="input !w-36 !py-1.5 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Address" placeholder="10.0.0.5" />',
-                    '<span class="text-gray-400 text-sm">:</span>',
-                    '<input class="input !w-20 !py-1.5 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Port" type="number" min="1" placeholder="端口" />',
-                    '<span class="text-gray-400 text-sm">/</span>',
-                    '<input class="input !w-28 !py-1.5 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Path" placeholder="路径(可选)" />',
-                    '<button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 ml-auto">',
-                    '<svg class="icon icon-sm"><use href="#i-x"></use></svg></button>'
-                ].join('');
             }
 
             function bind() {
@@ -167,7 +177,7 @@
                         var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
                         var ai = block.querySelectorAll('.addr-row').length;
                         var row = document.createElement('div');
-                        row.className = 'addr-row flex flex-wrap items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2.5 py-2';
+                        row.className = 'addr-row';
                         row.innerHTML = addrRowHtml(mi, ai);
                         block.querySelector('.addr-list').appendChild(row);
                         bind();
@@ -190,17 +200,11 @@
                         var addrs = (sel.options[sel.selectedIndex].getAttribute('data-addresses') || '')
                             .split('|').filter(Boolean);
                         if (!addrs.length) return;
-                        var block = sel.closest('.module-block');
-                        var list = block.querySelector('.addr-list');
-                        var existing = Array.prototype.map.call(list.querySelectorAll('.addr-row input[name$=".Address"]'), function (i) { return i.value; });
-                        addrs.forEach(function (a) {
-                            if (existing.indexOf(a) >= 0) return;
-                            var btn = block.querySelector('.btn-add-addr');
-                            btn.click();
-                            var rows = list.querySelectorAll('.addr-row');
-                            var last = rows[rows.length - 1];
-                            last.querySelector('input[name$=".Address"]').value = a;
-                        });
+                        var row = sel.closest('.addr-row');
+                        var addrInput = row.querySelector('input[name$=".Address"]');
+                        if (addrInput && !addrInput.value && addrs[0]) {
+                            addrInput.value = addrs[0];
+                        }
                     };
                 });
             }
@@ -208,14 +212,6 @@
             document.getElementById('btnAddModule').addEventListener('click', function () {
                 var list = document.getElementById('moduleList');
                 var mi = list.querySelectorAll('.module-block').length;
-                var hosts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Hosts.Select(h => new {
-                    id = h.Id.ToString(),
-                    text = $"{h.Name} ({h.Addresses.Count} 个地址)",
-                    addresses = string.Join("|", h.Addresses)
-                })));
-                var hostOpts = hosts.map(function (h) {
-                    return '<option value="' + h.id + '" data-addresses="' + h.addresses + '">' + h.text + '</option>';
-                }).join('');
                 var div = document.createElement('div');
                 div.className = 'module-block rounded-2xl border border-gray-200/80 bg-gray-50/50 p-4';
                 div.innerHTML = [
@@ -226,8 +222,6 @@
                     '<input type="hidden" name="App.Modules[' + mi + '].IsEnabled" value="false" />',
                     '<button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 hover:text-red-500 btn-remove-module"><svg class="icon"><use href="#i-trash"></use></svg></button>',
                     '</div>',
-                    '<div class="mb-3"><label class="field-label !text-xs">关联 Host（可选）</label>',
-                    '<select class="select" name="App.Modules[' + mi + '].HostId" data-host-select><option value="">— 不关联 —</option>' + hostOpts + '</select></div>',
                     '<div>',
                     '<div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-gray-500">地址（一行一个）</span>',
                     '<button type="button" class="btn-add-addr text-xs text-blue-600 hover:text-blue-800">+ 添加地址</button></div>',
