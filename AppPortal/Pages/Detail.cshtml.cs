@@ -19,19 +19,20 @@ public class DetailModel : PageModel
 
     public AppEntry App { get; set; } = new();
     public List<AccessHost> Hosts { get; set; } = new();
-    public AccessHost? ActiveHost { get; set; }
     public List<ModuleView> ModuleViews { get; set; } = new();
     public string? SourceLabel { get; set; }
 
-    public sealed record EndpointView(ResolvedEndpoint Resolved);
+    public sealed record PortView(ResolvedPort Resolved, string Label);
 
     public sealed record ModuleView(
         AppModule Module,
-        List<EndpointView> Endpoints,
-        bool AllUnreachable,
-        int UnreachableCount);
+        AccessHost? Host,
+        string SchemeText,
+        string PathText,
+        List<PortView> Ports,
+        bool AllUnreachable);
 
-    public async Task<IActionResult> OnGetAsync(string id, string? host)
+    public async Task<IActionResult> OnGetAsync(string id)
     {
         if (!IdParser.TryParse(id, out var oid))
         {
@@ -45,55 +46,49 @@ public class DetailModel : PageModel
         }
 
         App = app;
-        Hosts = await _hostService.ResolveForAppAsync(app);
-
-        ActiveHost = ResolveActiveHost(host);
+        Hosts = await _hostService.GetAllAsync();
         BuildModuleViews();
         SourceLabel = app.SourceId is not null ? $"Source:{app.SourceId}" : "手工录入";
         return Page();
     }
 
-    private AccessHost? ResolveActiveHost(string? hostQuery)
-    {
-        if (!string.IsNullOrWhiteSpace(hostQuery) && IdParser.TryParse(hostQuery, out var hid))
-        {
-            var match = Hosts.FirstOrDefault(h => h.Id == hid);
-            if (match is not null)
-            {
-                return match;
-            }
-        }
-
-        var preferred = App.HostRefs.FirstOrDefault(r => r.IsPreferred);
-        if (preferred is not null)
-        {
-            var byPref = Hosts.FirstOrDefault(h => h.Id == preferred.HostId);
-            if (byPref is not null)
-            {
-                return byPref;
-            }
-        }
-
-        return Hosts.FirstOrDefault(h => h.IsDefault) ?? Hosts.FirstOrDefault();
-    }
-
     private void BuildModuleViews()
     {
+        var hostMap = Hosts.ToDictionary(h => h.Id, h => h);
+
         ModuleViews = App.Modules
             .Where(m => m.IsEnabled)
             .OrderBy(m => m.Order)
             .ThenBy(m => m.Name)
             .Select(m =>
             {
-                var endpoints = m.Endpoints
-                    .Select(e => new EndpointView(UrlResolver.Resolve(e, ActiveHost)))
+                AccessHost? host = null;
+                if (m.HostId is { } hid)
+                {
+                    hostMap.TryGetValue(hid, out host);
+                }
+                else if (Hosts.Count > 0)
+                {
+                    host = Hosts.FirstOrDefault(h => h.IsDefault) ?? Hosts[0];
+                }
+
+                var ports = m.Ports
+                    .Select(p =>
+                    {
+                        var resolved = UrlResolver.Resolve(p, m, host);
+                        return new PortView(resolved, p.Port > 0 ? $":{p.Port}" : "入口");
+                    })
                     .ToList();
-                var unreachable = endpoints.Count(e => !e.Resolved.IsReachable);
+
+                var allUnreachable = ports.Count > 0 && ports.All(p => !p.Resolved.IsReachable);
+                var pathText = string.IsNullOrWhiteSpace(m.Path) ? "/" : m.Path.Trim();
                 return new ModuleView(
                     m,
-                    endpoints,
-                    endpoints.Count > 0 && unreachable == endpoints.Count,
-                    unreachable);
+                    host,
+                    UrlResolver.NormalizeScheme(m.Scheme),
+                    pathText,
+                    ports,
+                    allUnreachable);
             })
             .ToList();
     }

@@ -16,6 +16,8 @@ public class AppDraftModule
     public string Name { get; set; } = string.Empty;
     public string? SourceService { get; set; }
     public bool IsEnabled { get; set; } = true;
+    public string Scheme { get; set; } = "http";
+    public string? Path { get; set; }
     public List<AppDraftEndpoint> Endpoints { get; set; } = new();
 }
 

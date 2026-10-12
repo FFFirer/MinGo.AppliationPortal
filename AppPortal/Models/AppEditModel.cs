@@ -10,13 +10,12 @@ public class AppEditModel
     public string? IconUrl { get; set; }
     public int SortOrder { get; set; }
     public bool IsEnabled { get; set; } = true;
-    public List<HostRef> HostRefs { get; set; } = new();
     public List<AppModule> Modules { get; set; } = new()
     {
         new AppModule
         {
             Name = "访问入口",
-            Endpoints = new List<AppEndpoint> { new() }
+            Ports = new List<AppPort> { new() }
         }
     };
 
@@ -30,7 +29,6 @@ public class AppEditModel
             IconUrl = string.IsNullOrWhiteSpace(model.IconUrl) ? null : model.IconUrl.Trim(),
             SortOrder = model.SortOrder,
             IsEnabled = model.IsEnabled,
-            HostRefs = model.HostRefs ?? new List<HostRef>(),
             Modules = (model.Modules ?? new List<AppModule>())
                 .Where(m => !string.IsNullOrWhiteSpace(m.Name))
                 .Select((m, i) => new AppModule
@@ -40,21 +38,20 @@ public class AppEditModel
                     IsEnabled = m.IsEnabled,
                     Order = m.Order == 0 ? i : m.Order,
                     SourceService = m.SourceService,
-                    Endpoints = (m.Endpoints ?? new List<AppEndpoint>())
-                        .Where(e => e.Port is not null || !string.IsNullOrWhiteSpace(e.UrlOverride))
-                        .Select(e => new AppEndpoint
+                    HostId = m.HostId,
+                    Scheme = string.Equals(m.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http",
+                    Path = string.IsNullOrWhiteSpace(m.Path) ? null : m.Path.Trim(),
+                    Ports = (m.Ports ?? new List<AppPort>())
+                        .Where(p => p.Port > 0 || !string.IsNullOrWhiteSpace(p.UrlOverride))
+                        .Select(p => new AppPort
                         {
-                            DisplayName = string.IsNullOrWhiteSpace(e.DisplayName) ? "入口" : e.DisplayName.Trim(),
-                            Scheme = string.IsNullOrWhiteSpace(e.Scheme) ? "http" : e.Scheme.Trim().ToLowerInvariant() == "https" ? "https" : "http",
-                            HostId = e.HostId,
-                            Port = e.Port,
-                            ContainerPort = e.ContainerPort,
-                            Path = string.IsNullOrWhiteSpace(e.Path) ? null : e.Path.Trim(),
-                            UrlOverride = string.IsNullOrWhiteSpace(e.UrlOverride) ? null : e.UrlOverride.Trim()
+                            Port = p.Port > 0 ? p.Port : 80,
+                            ContainerPort = p.ContainerPort,
+                            UrlOverride = string.IsNullOrWhiteSpace(p.UrlOverride) ? null : p.UrlOverride.Trim()
                         })
                         .ToList()
                 })
-                .Where(m => m.Endpoints.Count > 0)
+                .Where(m => m.Ports.Count > 0)
                 .ToList()
         };
     }
@@ -68,7 +65,6 @@ public class AppEditModel
             IconUrl = entry.IconUrl,
             SortOrder = entry.SortOrder,
             IsEnabled = entry.IsEnabled,
-            HostRefs = entry.HostRefs,
             Modules = entry.Modules
                 .Select(m => new AppModule
                 {
@@ -77,7 +73,10 @@ public class AppEditModel
                     IsEnabled = m.IsEnabled,
                     Order = m.Order,
                     SourceService = m.SourceService,
-                    Endpoints = m.Endpoints.ToList()
+                    HostId = m.HostId,
+                    Scheme = m.Scheme,
+                    Path = m.Path,
+                    Ports = m.Ports.ToList()
                 })
                 .ToList()
         };

@@ -5,9 +5,7 @@
 }
 
 <div class="page-shell-narrow">
-    <div class="mb-6">
-        <a class="back-link" asp-page="Index"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>返回管理列表</a>
-    </div>
+    <a class="back-link" asp-page="Index"><svg class="icon"><use href="#i-arrow-left"></use></svg>返回管理列表</a>
 
     <div class="card card-pad">
         <h1 class="text-xl font-bold text-gray-900 mb-6">编辑应用</h1>
@@ -17,7 +15,7 @@
                 <div>
                     <label class="field-label" asp-for="App.Name">应用名称 *</label>
                     <input class="input" asp-for="App.Name" />
-                    <span class="text-xs text-red-500" asp-validation-for="App.Name"></span>
+                    <span class="field-error" asp-validation-for="App.Name"></span>
                 </div>
 
                 <div>
@@ -37,75 +35,83 @@
                 </div>
 
                 <div>
-                    <label class="field-label">可达 Host</label>
-                    <div class="flex flex-wrap gap-3">
-                        @for (var hi = 0; hi < Model.Hosts.Count; hi++)
-                        {
-                            var h = Model.Hosts[hi];
-                            var checkedAttr = Model.SelectedHostIds.Contains(h.Id) ? "checked" : null;
-                            <label class="host-option">
-                                <input type="checkbox" name="SelectedHostIds" value="@h.Id" checked="@checkedAttr" />
-                                <span>@h.Name</span>
-                                <span class="text-xs text-gray-400">@h.Address</span>
-                            </label>
-                        }
-                        @if (Model.Hosts.Count == 0)
-                        {
-                            <span class="text-xs text-gray-400">尚未配置 Host，入口可直接使用 UrlOverride 完整地址</span>
-                        }
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="field-label !mb-0">模块 *</label>
+                        <button type="button" id="btnAddModule" class="btn-secondary btn-sm">
+                            <svg class="icon icon-sm"><use href="#i-plus"></use></svg>添加模块
+                        </button>
                     </div>
-                </div>
+                    <p class="field-hint mb-3">每个模块对应一组入口：选定 Host、协议和路径，下方可挂多个端口。</p>
 
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm font-medium text-gray-700">模块与入口 *</label>
-                        <button type="button" id="btnAddModule" class="text-xs text-blue-600 hover:text-blue-800">+ 添加模块</button>
-                    </div>
                     <div id="moduleList" class="space-y-4">
                         @for (var mi = 0; mi < Model.App.Modules.Count; mi++)
                         {
                             var mod = Model.App.Modules[mi];
-                            <div class="module-block border border-gray-200 rounded-lg p-4">
-                                <div class="module-head">
-                                    <input class="input" name="App.Modules[@mi].Name" value="@mod.Name" placeholder="模块名称（如：前台 / API）" />
-                                    <input class="input w-28" name="App.Modules[@mi].Order" value="@mod.Order" type="number" placeholder="排序" />
-                                    <label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
+                            <div class="module-block rounded-2xl border border-gray-200/80 bg-gray-50/50 p-4">
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <input class="input !w-auto flex-1 min-w-[10rem]" name="App.Modules[@mi].Name" value="@mod.Name" placeholder="模块名称" />
+                                    <input class="input !w-20" name="App.Modules[@mi].Order" value="@mod.Order" type="number" placeholder="排序" />
+                                    <label class="check-label whitespace-nowrap">
                                         <input type="checkbox" name="App.Modules[@mi].IsEnabled" value="true" checked="@mod.IsEnabled" />
                                         启用
                                     </label>
-                                    <button type="button" class="btn-remove-module p-2 text-gray-400 hover:text-red-500" title="删除模块">
-                                        <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+                                    <input type="hidden" name="App.Modules[@mi].IsEnabled" value="false" />
+                                    <button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 hover:text-red-500 btn-remove-module" title="删除模块">
+                                        <svg class="icon"><use href="#i-trash"></use></svg>
                                     </button>
                                 </div>
-                                <input type="hidden" name="App.Modules[@mi].IsEnabled" value="false" />
-                                <div class="endpoint-list space-y-2 ml-1">
-                                    @for (var ei = 0; ei < mod.Endpoints.Count; ei++)
-                                    {
-                                        var ep = mod.Endpoints[ei];
-                                        <div class="endpoint-row endpoint-edit">
-                                            <input class="input ep-name !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].DisplayName" value="@ep.DisplayName" placeholder="显示名" />
-                                            <select class="input ep-scheme !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Scheme">
-                                                <option value="http" selected="@(ep.Scheme != "https")">http</option>
-                                                <option value="https" selected="@(ep.Scheme == "https")">https</option>
-                                            </select>
-                                            <input class="input ep-port !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Port" value="@ep.Port" type="number" placeholder="端口" />
-                                            <input class="input ep-path !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Path" value="@ep.Path" placeholder="路径 /admin" />
-                                            <input class="input ep-url !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].UrlOverride" value="@ep.UrlOverride" placeholder="完整 URL 可选" />
-                                            <button type="button" class="btn-remove-endpoint ep-del text-gray-400 hover:text-red-500">
-                                                <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
-                                            </button>
-                                        </div>
-                                    }
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                                    <div>
+                                        <label class="field-label !text-xs">Host</label>
+                                        <select class="select" name="App.Modules[@mi].HostId">
+                                            <option value="">— 未选择 —</option>
+                                            @foreach (var h in Model.Hosts)
+                                            {
+                                                <option value="@h.Id" selected="@(mod.HostId == h.Id)">@h.Name · @h.Address</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="field-label !text-xs">协议</label>
+                                        <select class="select" name="App.Modules[@mi].Scheme">
+                                            <option value="http" selected="@(mod.Scheme != "https")">http</option>
+                                            <option value="https" selected="@(mod.Scheme == "https")">https</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="field-label !text-xs">路径</label>
+                                        <input class="input" name="App.Modules[@mi].Path" value="@mod.Path" placeholder="/" />
+                                    </div>
                                 </div>
-                                <button type="button" class="btn-add-endpoint mt-2 text-xs text-blue-600 hover:text-blue-800">+ 添加入口</button>
+
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-gray-500">端口</span>
+                                        <button type="button" class="btn-add-port text-xs text-blue-600 hover:text-blue-800">+ 添加端口</button>
+                                    </div>
+                                    <div class="port-list flex flex-wrap gap-2">
+                                        @for (var pi = 0; pi < mod.Ports.Count; pi++)
+                                        {
+                                            var port = mod.Ports[pi];
+                                            <div class="port-row inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2 py-1.5">
+                                                <input class="input !border-0 !shadow-none !px-2 !py-1 !w-20 !text-sm" name="App.Modules[@mi].Ports[@pi].Port" value="@port.Port" type="number" min="1" placeholder="端口" />
+                                                <input type="hidden" name="App.Modules[@mi].Ports[@pi].ContainerPort" value="@port.ContainerPort" />
+                                                <button type="button" class="btn-remove-port text-gray-300 hover:text-red-500 p-1">
+                                                    <svg class="icon icon-sm"><use href="#i-x"></use></svg>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         }
                     </div>
-                    <span class="text-xs text-red-500" asp-validation-for="App.Modules"></span>
+                    <span class="field-error" asp-validation-for="App.Modules"></span>
                 </div>
 
                 <div class="flex items-center gap-3 pt-2">
-                    <button type="submit" class="btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>保存</button>
+                    <button type="submit" class="btn-primary"><svg class="icon"><use href="#i-check"></use></svg>保存</button>
                     <a class="btn-secondary" asp-page="Index">取消</a>
                 </div>
             </div>
@@ -122,36 +128,14 @@
                         if (!el.name) return;
                         el.name = el.name.replace(/App\.Modules\[\d+\]/, 'App.Modules[' + mi + ']');
                     });
-                    mod.querySelectorAll('.endpoint-row').forEach(function (row, ei) {
-                        row.querySelectorAll('input,select').forEach(function (el) {
+                    mod.querySelectorAll('.port-row').forEach(function (row, pi) {
+                        row.querySelectorAll('input').forEach(function (el) {
                             if (!el.name) return;
-                            el.name = el.name.replace(/Endpoints\[\d+\]/, 'Endpoints[' + ei + ']');
+                            el.name = el.name.replace(/Ports\[\d+\]/, 'Ports[' + pi + ']');
                         });
                     });
                 });
             }
-
-            document.getElementById('btnAddModule').addEventListener('click', function () {
-                var list = document.getElementById('moduleList');
-                var mi = list.querySelectorAll('.module-block').length;
-                var div = document.createElement('div');
-                div.className = 'module-block border border-gray-200 rounded-lg p-4';
-                div.innerHTML = [
-                    '<div class="module-head">',
-                    '<input class="input" name="App.Modules[' + mi + '].Name" placeholder="模块名称" />',
-                    '<input class="input w-28" name="App.Modules[' + mi + '].Order" type="number" placeholder="排序" />',
-                    '<label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap"><input type="checkbox" name="App.Modules[' + mi + '].IsEnabled" value="true" checked /> 启用</label>',
-                    '<input type="hidden" name="App.Modules[' + mi + '].IsEnabled" value="false" />',
-                    '<button type="button" class="btn-remove-module p-2 text-gray-400 hover:text-red-500"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>',
-                    '</div>',
-                    '<div class="endpoint-list space-y-2 ml-1"></div>',
-                    '<button type="button" class="btn-add-endpoint mt-2 text-xs text-blue-600 hover:text-blue-800">+ 添加入口</button>'
-                ].join('');
-                list.appendChild(div);
-                div.querySelector('.btn-add-endpoint').click();
-                bind();
-                reindex();
-            });
 
             function bind() {
                 document.querySelectorAll('.btn-remove-module').forEach(function (btn) {
@@ -162,37 +146,71 @@
                         }
                     };
                 });
-                document.querySelectorAll('.btn-add-endpoint').forEach(function (btn) {
+
+                document.querySelectorAll('.btn-add-port').forEach(function (btn) {
                     btn.onclick = function () {
                         var block = btn.closest('.module-block');
-                        var epList = block.querySelector('.endpoint-list');
                         var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
-                        var ei = epList.querySelectorAll('.endpoint-row').length;
+                        var pi = block.querySelectorAll('.port-row').length;
                         var row = document.createElement('div');
-                        row.className = 'endpoint-row endpoint-edit';
+                        row.className = 'port-row inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2 py-1.5';
                         row.innerHTML = [
-                            '<input class="input ep-name !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].DisplayName" placeholder="显示名" />',
-                            '<select class="input ep-scheme !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Scheme"><option value="http">http</option><option value="https">https</option></select>',
-                            '<input class="input ep-port !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Port" type="number" placeholder="端口" />',
-                            '<input class="input ep-path !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Path" placeholder="路径 /admin" />',
-                            '<input class="input ep-url !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].UrlOverride" placeholder="完整 URL 可选" />',
-                            '<button type="button" class="btn-remove-endpoint ep-del text-gray-400 hover:text-red-500"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>'
+                            '<input class="input !border-0 !shadow-none !px-2 !py-1 !w-20 !text-sm" name="App.Modules[' + mi + '].Ports[' + pi + '].Port" type="number" min="1" placeholder="端口" />',
+                            '<input type="hidden" name="App.Modules[' + mi + '].Ports[' + pi + '].ContainerPort" value="" />',
+                            '<button type="button" class="btn-remove-port text-gray-300 hover:text-red-500 p-1">',
+                            '<svg class="icon icon-sm"><use href="#i-x"></use></svg>',
+                            '</button>'
                         ].join('');
-                        epList.appendChild(row);
+                        block.querySelector('.port-list').appendChild(row);
                         bind();
                         reindex();
                     };
                 });
-                document.querySelectorAll('.btn-remove-endpoint').forEach(function (btn) {
+
+                document.querySelectorAll('.btn-remove-port').forEach(function (btn) {
                     btn.onclick = function () {
-                        var rows = btn.closest('.endpoint-list').querySelectorAll('.endpoint-row');
+                        var rows = btn.closest('.port-list').querySelectorAll('.port-row');
                         if (rows.length > 1) {
-                            btn.closest('.endpoint-row').remove();
+                            btn.closest('.port-row').remove();
                             reindex();
                         }
                     };
                 });
             }
+
+            document.getElementById('btnAddModule').addEventListener('click', function () {
+                var list = document.getElementById('moduleList');
+                var mi = list.querySelectorAll('.module-block').length;
+                var hosts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Hosts.Select(h => new { id = h.Id.ToString(), text = $"{h.Name} · {h.Address}" })));
+                var hostOpts = hosts.map(function (h) {
+                    return '<option value="' + h.id + '">' + h.text + '</option>';
+                }).join('');
+                var div = document.createElement('div');
+                div.className = 'module-block rounded-2xl border border-gray-200/80 bg-gray-50/50 p-4';
+                div.innerHTML = [
+                    '<div class="flex flex-wrap items-center gap-2 mb-3">',
+                    '<input class="input !w-auto flex-1 min-w-[10rem]" name="App.Modules[' + mi + '].Name" placeholder="模块名称" />',
+                    '<input class="input !w-20" name="App.Modules[' + mi + '].Order" type="number" placeholder="排序" />',
+                    '<label class="check-label whitespace-nowrap"><input type="checkbox" name="App.Modules[' + mi + '].IsEnabled" value="true" checked /> 启用</label>',
+                    '<input type="hidden" name="App.Modules[' + mi + '].IsEnabled" value="false" />',
+                    '<button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 hover:text-red-500 btn-remove-module"><svg class="icon"><use href="#i-trash"></use></svg></button>',
+                    '</div>',
+                    '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">',
+                    '<div><label class="field-label !text-xs">Host</label><select class="select" name="App.Modules[' + mi + '].HostId"><option value="">— 未选择 —</option>' + hostOpts + '</select></div>',
+                    '<div><label class="field-label !text-xs">协议</label><select class="select" name="App.Modules[' + mi + '].Scheme"><option value="http">http</option><option value="https">https</option></select></div>',
+                    '<div><label class="field-label !text-xs">路径</label><input class="input" name="App.Modules[' + mi + '].Path" placeholder="/" /></div>',
+                    '</div>',
+                    '<div>',
+                    '<div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-gray-500">端口</span>',
+                    '<button type="button" class="btn-add-port text-xs text-blue-600 hover:text-blue-800">+ 添加端口</button></div>',
+                    '<div class="port-list flex flex-wrap gap-2"></div>',
+                    '</div>'
+                ].join('');
+                list.appendChild(div);
+                div.querySelector('.btn-add-port').click();
+                bind();
+                reindex();
+            });
 
             bind();
         })();

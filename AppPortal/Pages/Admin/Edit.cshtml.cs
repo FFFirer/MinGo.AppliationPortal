@@ -15,7 +15,6 @@ public class EditModel : PageModel
     public AppEditModel App { get; set; } = new();
 
     public List<AccessHost> Hosts { get; set; } = new();
-    public List<ObjectId> SelectedHostIds { get; set; } = new();
 
     public EditModel(IAppService appService, IHostService hostService)
     {
@@ -38,7 +37,6 @@ public class EditModel : PageModel
 
         App = AppEditModel.FromEntry(app);
         Hosts = await _hostService.GetAllAsync();
-        SelectedHostIds = App.HostRefs.Select(r => r.HostId).ToList();
         return Page();
     }
 
@@ -50,7 +48,6 @@ public class EditModel : PageModel
         }
 
         Hosts = await _hostService.GetAllAsync();
-        SelectedHostIds = App.HostRefs.Select(r => r.HostId).ToList();
 
         if (string.IsNullOrWhiteSpace(App.Name))
         {
@@ -58,18 +55,9 @@ public class EditModel : PageModel
         }
 
         var entry = AppEditModel.ToEntry(App, oid);
-        entry.HostRefs = SelectedHostIds
-            .Distinct()
-            .Select(id => new HostRef { HostId = id })
-            .ToList();
-        if (entry.HostRefs.Count > 0)
-        {
-            entry.HostRefs[0].IsPreferred = true;
-        }
-
         if (entry.Modules.Count == 0)
         {
-            ModelState.AddModelError("App.Modules", "至少需要一个模块下的一个有效入口");
+            ModelState.AddModelError("App.Modules", "至少需要一个模块和端口");
         }
 
         if (!ModelState.IsValid)
@@ -77,7 +65,6 @@ public class EditModel : PageModel
             return Page();
         }
 
-        // Preserve source provenance
         var existing = await _appService.GetByIdAsync(oid);
         if (existing is not null)
         {
@@ -85,6 +72,7 @@ public class EditModel : PageModel
             entry.ExternalId = existing.ExternalId;
             entry.SyncHint = existing.SyncHint;
             entry.CreatedAt = existing.CreatedAt;
+            entry.HostRefs = existing.HostRefs;
         }
 
         await _appService.UpdateAsync(entry);

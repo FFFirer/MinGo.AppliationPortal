@@ -51,13 +51,13 @@ public class ImportService : IImportService
                 SourceService = m.SourceService,
                 IsEnabled = m.IsEnabled,
                 Order = index,
-                Endpoints = m.Endpoints
+                Scheme = m.Scheme,
+                Path = m.Path,
+                Ports = m.Endpoints
                     .Where(e => e.Selected)
-                    .Select(e => new AppEndpoint
+                    .Select(e => new AppPort
                     {
-                        DisplayName = e.DisplayName,
-                        Scheme = e.Scheme,
-                        Port = e.HostPort,
+                        Port = e.HostPort ?? 80,
                         ContainerPort = e.ContainerPort
                     })
                     .ToList()
