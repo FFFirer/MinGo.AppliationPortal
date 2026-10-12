@@ -51,16 +51,11 @@ public class ImportService : IImportService
                 SourceService = m.SourceService,
                 IsEnabled = m.IsEnabled,
                 Order = index,
-                Addresses = m.Endpoints
-                    .Where(e => e.Selected)
-                    .Select(e =>
-                    {
-                        var scheme = e.Scheme == "https" ? "https" : "http";
-                        var host = string.IsNullOrWhiteSpace(e.Address) ? "127.0.0.1" : e.Address.Trim();
-                        var port = e.HostPort is { } p ? $":{p}" : "";
-                        var path = string.IsNullOrWhiteSpace(m.Path) ? "" : (m.Path.StartsWith("/") ? m.Path : "/" + m.Path);
-                        return $"{scheme}://{host}{port}{path}";
-                    })
+                Addresses = m.Addresses
+                    .Where(a => a.Selected)
+                    .Select(a => (a.Url ?? "").Trim())
+                    .Where(u => u.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                             || u.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                     .ToList()
             })
             .ToList();

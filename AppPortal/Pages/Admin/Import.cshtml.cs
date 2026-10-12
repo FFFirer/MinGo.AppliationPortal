@@ -10,21 +10,37 @@ public class ImportModel : PageModel
 {
     private readonly IDataSourceService _sources;
     private readonly IImportService _import;
+    private readonly IHostService _hosts;
 
-    public ImportModel(IDataSourceService sources, IImportService import)
+    public ImportModel(IDataSourceService sources, IImportService import, IHostService hosts)
     {
         _sources = sources;
         _import = import;
+        _hosts = hosts;
     }
 
     public DataSource? Source { get; set; }
     public List<ExternalCandidate> Candidates { get; set; } = new();
+    public List<AccessHost> Hosts { get; set; } = new();
     public AppDraft? Draft { get; set; }
     public string? Message { get; set; }
     public string? Error { get; set; }
 
     [BindProperty]
     public string? SelectedExternalId { get; set; }
+
+    /// <summary>Batch rewrite helper: scheme / host / path for all address URLs.</summary>
+    [BindProperty]
+    public string GenScheme { get; set; } = "http";
+
+    [BindProperty]
+    public string? GenHost { get; set; }
+
+    [BindProperty]
+    public string? GenHostCustom { get; set; }
+
+    [BindProperty]
+    public string? GenPath { get; set; }
 
     public async Task<IActionResult> OnGetAsync(string sourceId, string? externalId)
     {
@@ -38,6 +54,9 @@ public class ImportModel : PageModel
         {
             return NotFound();
         }
+
+        Hosts = await _hosts.GetAllAsync();
+        GenHost = Hosts.SelectMany(h => h.Addresses).FirstOrDefault();
 
         try
         {
@@ -69,7 +88,17 @@ public class ImportModel : PageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnPostRewriteAsync(string sourceId)
+    {
+        return await LoadDraftAndApplyAsync(sourceId, rewriteOnly: true);
+    }
+
     public async Task<IActionResult> OnPostImportAsync(string sourceId)
+    {
+        return await LoadDraftAndApplyAsync(sourceId, rewriteOnly: false);
+    }
+
+    private async Task<IActionResult> LoadDraftAndApplyAsync(string sourceId, bool rewriteOnly)
     {
         if (!IdParser.TryParse(sourceId, out var oid))
         {
@@ -82,6 +111,8 @@ public class ImportModel : PageModel
             return NotFound();
         }
 
+        Hosts = await _hosts.GetAllAsync();
+
         try
         {
             Candidates = await _import.ListCandidatesAsync(Source);
@@ -93,44 +124,88 @@ public class ImportModel : PageModel
             }
 
             Draft = await _import.ResolveDraftAsync(Source, candidate);
-            // Apply posted selection checkboxes if present
-            ApplySelection();
+            ApplyPostedAddresses();
+            RewriteUrlsFromPortLabels();
+
+            if (rewriteOnly)
+            {
+                return Page();
+            }
 
             var app = await _import.ImportDraftAsync(Source, Draft);
-            // Update source LastStatus
             await _sources.UpdateAsync(Source);
             return Redirect($"/Detail/{app.Id}");
         }
         catch (Exception ex)
         {
-            Error = $"导入失败：{ex.Message}";
+            Error = rewriteOnly ? $"更新预览失败：{ex.Message}" : $"导入失败：{ex.Message}";
             return Page();
         }
     }
 
-    private void ApplySelection()
+    private void ApplyPostedAddresses()
     {
         if (Draft is null)
         {
             return;
         }
 
-        // Keep defaults from ResolveAsync; selection form fields named Selected_{moduleIndex}_{epIndex}
         for (var mi = 0; mi < Draft.Modules.Count; mi++)
         {
-            for (var ei = 0; ei < Draft.Modules[mi].Endpoints.Count; ei++)
+            for (var ai = 0; ai < Draft.Modules[mi].Addresses.Count; ai++)
             {
-                var key = $"Selected_{mi}_{ei}";
-                if (Request.Form.ContainsKey(key))
+                var addr = Draft.Modules[mi].Addresses[ai];
+                var selKey = $"Sel_{mi}_{ai}";
+                if (Request.Form.ContainsKey(selKey))
                 {
-                    Draft.Modules[mi].Endpoints[ei].Selected = Request.Form[key] == "true";
+                    addr.Selected = Request.Form[selKey] == "true";
+                }
+
+                var urlKey = $"Url_{mi}_{ai}";
+                if (Request.Form.ContainsKey(urlKey))
+                {
+                    addr.Url = Request.Form[urlKey].ToString();
                 }
             }
+        }
+    }
 
-            var nameKey = $"ModuleName_{mi}";
-            if (Request.Form.ContainsKey(nameKey) && !string.IsNullOrWhiteSpace(Request.Form[nameKey]))
+    /// <summary>
+    /// Rebuild URL strings from Portainer labels like 8080→80 using selected host/scheme/path.
+    /// Keeps hand-edited full URLs that no longer look like placeholders.
+    /// </summary>
+    private void RewriteUrlsFromPortLabels()
+    {
+        if (Draft is null)
+        {
+            return;
+        }
+
+        var scheme = string.Equals(GenScheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
+        var host = (!string.IsNullOrWhiteSpace(GenHostCustom) ? GenHostCustom : GenHost ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            return;
+        }
+
+        var path = (GenPath ?? "").Trim();
+        if (path.Length > 0 && !path.StartsWith('/'))
+        {
+            path = "/" + path;
+        }
+
+        foreach (var module in Draft.Modules)
+        {
+            foreach (var addr in module.Addresses)
             {
-                Draft.Modules[mi].Name = Request.Form[nameKey].ToString();
+                var label = addr.Label ?? "";
+                // Label is "8080→80" or "8080" or "80"
+                var left = label.Split('→', '-', ':')[0].Trim();
+                if (int.TryParse(left, out var port) && port > 0)
+                {
+                    var portSeg = port is 80 && scheme == "http" || port is 443 && scheme == "https" ? "" : $":{port}";
+                    addr.Url = $"{scheme}://{host}{portSeg}{path}";
+                }
             }
         }
     }

@@ -53,20 +53,28 @@ public class PortainerAppSource : IAppSource
 
             foreach (var mapping in group)
             {
-                module.Endpoints.Add(new AppDraftEndpoint
+                var pub = mapping.PublicPort;
+                var label = pub is { } p
+                    ? (mapping.PrivatePort > 0 && mapping.PrivatePort != p ? $"{p}→{mapping.PrivatePort}" : $"{p}")
+                    : $"{mapping.PrivatePort}";
+
+                // Placeholder URL; import UI rewrites host/scheme/path before confirm.
+                var url = pub is { } port
+                    ? $"http://127.0.0.1:{port}/"
+                    : $"http://127.0.0.1/";
+
+                module.Addresses.Add(new AppDraftAddress
                 {
-                    DisplayName = mapping.PublicPort is { } pub
-                        ? $"{group.Key} · {pub}→{mapping.PrivatePort}"
-                        : $"{group.Key} · {mapping.PrivatePort}",
-                    Scheme = "http",
-                    Address = draft.HostHints.FirstOrDefault() ?? "",
-                    HostPort = mapping.PublicPort,
-                    ContainerPort = mapping.PrivatePort,
-                    Selected = mapping.PublicPort is not null
+                    Url = url,
+                    Label = label,
+                    Selected = pub is not null
                 });
             }
 
-            draft.Modules.Add(module);
+            if (module.Addresses.Count > 0)
+            {
+                draft.Modules.Add(module);
+            }
         }
 
         draft.SyncHint = ComputeSyncHint(draft);
@@ -79,11 +87,9 @@ public class PortainerAppSource : IAppSource
             .OrderBy(m => m.Name)
             .Select(m =>
             {
-                var eps = string.Join(",",
-                    m.Endpoints
-                        .OrderBy(e => e.HostPort ?? 0)
-                        .ThenBy(e => e.ContainerPort ?? 0)
-                        .Select(e => $"{e.HostPort}:{e.ContainerPort}"));
+                var eps = string.Join(",", m.Addresses
+                    .OrderBy(a => a.Label)
+                    .Select(a => a.Label ?? a.Url));
                 return $"{m.Name}|{eps}";
             });
         return string.Join(";", parts);

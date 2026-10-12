@@ -2,14 +2,15 @@ using AppPortal.Models;
 
 namespace AppPortal.Services;
 
-public class AppDraftEndpoint
+public class AppDraftAddress
 {
-    public string DisplayName { get; set; } = string.Empty;
-    public string Scheme { get; set; } = "http";
-    public string Address { get; set; } = string.Empty;
-    public int? HostPort { get; set; }
-    public int? ContainerPort { get; set; }
+    /// <summary>Full URL string (scheme required), same shape as AppModule.Addresses.</summary>
+    public string Url { get; set; } = string.Empty;
+
     public bool Selected { get; set; } = true;
+
+    /// <summary>Preview hint, e.g. 8080→80.</summary>
+    public string? Label { get; set; }
 }
 
 public class AppDraftModule
@@ -17,9 +18,7 @@ public class AppDraftModule
     public string Name { get; set; } = string.Empty;
     public string? SourceService { get; set; }
     public bool IsEnabled { get; set; } = true;
-    public string Scheme { get; set; } = "http";
-    public string? Path { get; set; }
-    public List<AppDraftEndpoint> Endpoints { get; set; } = new();
+    public List<AppDraftAddress> Addresses { get; set; } = new();
 }
 
 public class AppDraft

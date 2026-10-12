@@ -10,9 +10,11 @@
     <PackageReference Include="LiteDB" Version="5.0.21" />
   </ItemGroup>
 
+  <!-- Rebuild CSS whenever the Tailwind toolchain is present (node_modules).
+       Docker/CI images without Node must pre-seed wwwroot/css/app.css. -->
   <Target Name="TailwindBuild" BeforeTargets="Build">
-    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css --minify" Condition="'$(Configuration)'=='Release' And !Exists('wwwroot/css/app.css')" />
-    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css" Condition="'$(Configuration)'!='Release' And !Exists('wwwroot/css/app.css')" />
+    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css --minify" Condition="'$(Configuration)'=='Release' And Exists('node_modules')" />
+    <Exec Command="npx tailwindcss -i Styles/app.css -o wwwroot/css/app.css" Condition="'$(Configuration)'!='Release' And Exists('node_modules')" />
   </Target>
 
 </Project>
