@@ -10,7 +10,7 @@
             <h1 class="page-title">应用管理</h1>
             <p class="page-desc">维护应用列表，管理启用/禁用状态</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="toolbar">
             <a class="btn-secondary btn-sm !py-2 !px-3.5" asp-page="Hosts">Host 目录</a>
             <a class="btn-secondary btn-sm !py-2 !px-3.5" asp-page="Sources">数据源 / 导入</a>
             <a class="btn-primary !py-2 !px-4" asp-page="Create">
@@ -37,7 +37,7 @@
     }
     else
     {
-        <div class="table-panel">
+        <div class="table-panel"><div class="table-scroll">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -97,7 +97,7 @@
                                 }
                             </td>
                             <td>
-                                <div class="flex items-center justify-end gap-1.5">
+                                <div class="toolbar justify-end">
                                     <form method="post" asp-page-handler="Toggle" asp-route-id="@app.Id" class="inline">
                                         <button type="submit" class="btn-secondary btn-sm">@(app.IsEnabled ? "禁用" : "启用")</button>
                                     </form>
@@ -112,6 +112,7 @@
                     }
                 </tbody>
             </table>
+            </div>
         </div>
     }
 </div>

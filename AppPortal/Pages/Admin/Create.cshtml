@@ -43,7 +43,7 @@
                         {
                             var h = Model.Hosts[hi];
                             var checkedAttr = Model.SelectedHostIds.Contains(h.Id) ? "checked" : null;
-                            <label class="inline-flex items-center gap-2 text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-2">
+                            <label class="host-option">
                                 <input type="checkbox" name="SelectedHostIds" value="@h.Id" checked="@checkedAttr" />
                                 <span>@h.Name</span>
                                 <span class="text-xs text-gray-400">@h.Address</span>
@@ -66,7 +66,7 @@
                         {
                             var mod = Model.App.Modules[mi];
                             <div class="module-block border border-gray-200 rounded-lg p-4">
-                                <div class="flex gap-2 items-start mb-3">
+                                <div class="module-head">
                                     <input class="input" name="App.Modules[@mi].Name" value="@mod.Name" placeholder="模块名称（如：前台 / API）" />
                                     <input class="input w-28" name="App.Modules[@mi].Order" value="@mod.Order" type="number" placeholder="排序" />
                                     <label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
@@ -82,17 +82,17 @@
                                     @for (var ei = 0; ei < mod.Endpoints.Count; ei++)
                                     {
                                         var ep = mod.Endpoints[ei];
-                                        <div class="endpoint-row grid grid-cols-12 gap-2 items-center">
-                                            <input class="col-span-3 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].DisplayName" value="@ep.DisplayName" placeholder="显示名" />
-                                            <select class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].Kind">
+                                        <div class="endpoint-row endpoint-edit">
+                                            <input class="input ep-name !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].DisplayName" value="@ep.DisplayName" placeholder="显示名" />
+                                            <select class="input ep-kind !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Kind">
                                                 <option value="Http" selected="@(ep.Kind == EndpointKind.Http)">Http</option>
                                                 <option value="Tcp" selected="@(ep.Kind == EndpointKind.Tcp)">Tcp</option>
                                                 <option value="Udp" selected="@(ep.Kind == EndpointKind.Udp)">Udp</option>
                                             </select>
-                                            <input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].Port" value="@ep.Port" type="number" placeholder="端口" />
-                                            <input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].Path" value="@ep.Path" placeholder="路径 /admin" />
-                                            <input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].UrlOverride" value="@ep.UrlOverride" placeholder="完整 URL 可选" />
-                                            <button type="button" class="btn-remove-endpoint col-span-1 text-gray-400 hover:text-red-500 justify-self-end">
+                                            <input class="input ep-port !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Port" value="@ep.Port" type="number" placeholder="端口" />
+                                            <input class="input ep-path !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Path" value="@ep.Path" placeholder="路径 /admin" />
+                                            <input class="input ep-url !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].UrlOverride" value="@ep.UrlOverride" placeholder="完整 URL 可选" />
+                                            <button type="button" class="btn-remove-endpoint ep-del text-gray-400 hover:text-red-500">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                             </button>
                                         </div>
@@ -138,7 +138,7 @@
                 var div = document.createElement('div');
                 div.className = 'module-block border border-gray-200 rounded-lg p-4';
                 div.innerHTML = [
-                    '<div class="flex gap-2 items-start mb-3">',
+                    '<div class="module-head">',
                     '<input class="input" name="App.Modules[' + mi + '].Name" placeholder="模块名称" />',
                     '<input class="input w-28" name="App.Modules[' + mi + '].Order" type="number" placeholder="排序" />',
                     '<label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap"><input type="checkbox" name="App.Modules[' + mi + '].IsEnabled" value="true" checked /> 启用</label>',
@@ -170,14 +170,14 @@
                         var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
                         var ei = epList.querySelectorAll('.endpoint-row').length;
                         var row = document.createElement('div');
-                        row.className = 'endpoint-row grid grid-cols-12 gap-2 items-center';
+                        row.className = 'endpoint-row endpoint-edit';
                         row.innerHTML = [
-                            '<input class="col-span-3 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].DisplayName" placeholder="显示名" />',
-                            '<select class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Kind"><option value="Http">Http</option><option value="Tcp">Tcp</option><option value="Udp">Udp</option></select>',
-                            '<input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Port" type="number" placeholder="端口" />',
-                            '<input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Path" placeholder="路径 /admin" />',
-                            '<input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].UrlOverride" placeholder="完整 URL 可选" />',
-                            '<button type="button" class="btn-remove-endpoint col-span-1 text-gray-400 hover:text-red-500 justify-self-end"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>'
+                            '<input class="input ep-name !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].DisplayName" placeholder="显示名" />',
+                            '<select class="input ep-kind !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Kind"><option value="Http">Http</option><option value="Tcp">Tcp</option><option value="Udp">Udp</option></select>',
+                            '<input class="input ep-port !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Port" type="number" placeholder="端口" />',
+                            '<input class="input ep-path !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Path" placeholder="路径 /admin" />',
+                            '<input class="input ep-url !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].UrlOverride" placeholder="完整 URL 可选" />',
+                            '<button type="button" class="btn-remove-endpoint ep-del text-gray-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>'
                         ].join('');
                         epList.appendChild(row);
                         bind();

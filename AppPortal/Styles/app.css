@@ -248,3 +248,135 @@
            flex items-center justify-center text-sm font-semibold shrink-0 select-none;
   }
 }
+
+/* ——— Mobile adaptation ——— */
+@layer components {
+  /* Tables: horizontal scroll with minimum width so columns stay usable */
+  .table-scroll {
+    @apply overflow-x-auto -mx-4 sm:mx-0;
+  }
+
+  .table-scroll .data-table {
+    @apply min-w-[640px];
+  }
+
+  /* Detail endpoint rows stack on small screens */
+  .endpoint-row {
+    @apply flex-col items-stretch sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4;
+  }
+
+  .endpoint-row > .shrink-0 {
+    @apply self-end sm:self-auto;
+  }
+
+  /* Module summary stays readable when badges wrap */
+  .module-summary {
+    @apply flex-wrap sm:flex-nowrap;
+  }
+
+  /* Form module block header stacks */
+  .module-head {
+    @apply flex flex-wrap gap-2 items-start mb-3;
+  }
+
+  /* Endpoint editor grid: 2-col stack → 12-col on md */
+  .endpoint-edit {
+    @apply grid grid-cols-2 md:grid-cols-12 gap-2 items-center;
+  }
+
+  .endpoint-edit > .ep-name {
+    @apply col-span-2 md:col-span-3;
+  }
+
+  .endpoint-edit > .ep-kind {
+    @apply col-span-1 md:col-span-2;
+  }
+
+  .endpoint-edit > .ep-port {
+    @apply col-span-1 md:col-span-2;
+  }
+
+  .endpoint-edit > .ep-path {
+    @apply col-span-1 md:col-span-2;
+  }
+
+  .endpoint-edit > .ep-url {
+    @apply col-span-1 md:col-span-2;
+  }
+
+  .endpoint-edit > .ep-del {
+    @apply col-span-2 md:col-span-1 justify-self-end md:justify-self-end;
+  }
+
+  /* Host chips wrap with comfortable touch targets */
+  .host-chip-active,
+  .host-chip-idle {
+    @apply min-h-[36px];
+  }
+
+  /* Action toolbars: wrap rather than overflow */
+  .toolbar {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  /* Larger tap targets on coarse pointers */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply min-h-[40px];
+  }
+
+  .btn-sm {
+    @apply !min-h-[32px];
+  }
+
+  /* Sticky header should not eat too much height on phones */
+  .site-header-inner {
+    @apply h-14 sm:h-16;
+  }
+
+  /* Page padding a bit tighter on very small screens */
+  .page-shell,
+  .page-shell-narrow {
+    @apply px-4 py-5 sm:px-6 sm:py-8 lg:px-8;
+  }
+}
+
+@media (max-width: 640px) {
+  .data-table thead th {
+    @apply !text-left;
+    white-space: nowrap;
+  }
+
+  .data-table tbody td {
+    @apply text-sm;
+  }
+
+  /* Card lists: slightly tighter gap */
+  .grid {
+    /* keep default */
+  }
+}
+
+@layer components {
+  /* Module head: name takes full width on phones, order/enable/delete share a row */
+  .module-head > .input:first-child {
+    @apply w-full md:flex-1;
+  }
+
+  .module-head {
+    @apply gap-2;
+  }
+
+  /* Host checkbox cards wrap comfortably */
+  .host-option {
+    @apply inline-flex items-center gap-2 text-sm text-gray-700 border border-gray-200
+           rounded-xl px-3 py-2.5 min-h-[44px];
+  }
+
+  /* Import module editor on phones */
+  .import-endpoint {
+    @apply flex flex-wrap items-center gap-x-3 gap-y-1 text-sm bg-white rounded-xl
+           border border-gray-100 px-3 py-2.5;
+  }
+}

@@ -20,7 +20,7 @@
         <div class="alert-warn">@Model.Message</div>
     }
 
-    <div class="table-panel mb-6">
+    <div class="table-panel mb-6"><div class="table-scroll">
         <table class="data-table">
             <thead>
                 <tr>
@@ -45,7 +45,7 @@
                             }
                         </td>
                         <td>
-                            <div class="flex justify-end">
+                            <div class="toolbar justify-end">
                                 <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
                                     <button type="submit" class="btn-danger btn-sm">删除</button>
                                 </form>
@@ -61,6 +61,7 @@
                 }
             </tbody>
         </table>
+        </div>
     </div>
 
     <div class="card card-pad">
