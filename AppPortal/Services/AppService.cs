@@ -103,11 +103,7 @@ internal static class AppMigration
             Order = 0,
             Addresses = app.Urls
                 .Where(u => !string.IsNullOrWhiteSpace(u.Url))
-                .Select(u => new ModuleAddress
-                {
-                    Scheme = "http",
-                    Address = u.Url.Trim()
-                })
+                .Select(u => u.Url.Trim())
                 .ToList()
         };
 

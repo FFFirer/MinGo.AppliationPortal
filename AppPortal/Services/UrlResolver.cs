@@ -1,48 +1,31 @@
-using AppPortal.Models;
-
 namespace AppPortal.Services;
 
-public sealed record ResolvedAddress(ModuleAddress Address, string Url);
-
+/// <summary>URL helpers for module address strings (scheme required).</summary>
 public static class UrlResolver
 {
-    public static ResolvedAddress Resolve(ModuleAddress address)
+    public static bool IsValidUrl(string? url)
     {
-        var scheme = NormalizeScheme(address.Scheme);
-        var host = address.Address.Trim().TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(host))
+        if (string.IsNullOrWhiteSpace(url))
         {
-            return new ResolvedAddress(address, "");
+            return false;
         }
 
-        // Allow pasting a full URL into Address
-        if (host.Contains("://", StringComparison.Ordinal))
-        {
-            return new ResolvedAddress(address, host);
-        }
-
-        var portSeg = address.Port is { } p && p > 0 ? $":{p}" : "";
-        var path = NormalizePath(address.Path);
-        var url = $"{scheme}://{host}{portSeg}{path}";
-        return new ResolvedAddress(address, url);
+        var u = url.Trim();
+        return u.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || u.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static string NormalizeScheme(string? scheme)
-        => string.Equals(scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
-
-    private static string NormalizePath(string? path)
+    public static string Build(string scheme, string address, string? port, string? path)
     {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return "";
-        }
-
-        var p = path.Trim();
-        if (!p.StartsWith('/'))
+        var s = string.Equals(scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
+        var host = (address ?? "").Trim();
+        var portSeg = !string.IsNullOrWhiteSpace(port) ? ":" + port.Trim().TrimStart(':') : "";
+        var p = (path ?? "").Trim();
+        if (p.Length > 0 && !p.StartsWith('/'))
         {
             p = "/" + p;
         }
 
-        return p.TrimEnd('/') == "" ? "" : p;
+        return $"{s}://{host}{portSeg}{p}";
     }
 }

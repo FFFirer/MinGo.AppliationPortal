@@ -55,40 +55,23 @@
                                 <div class="text-xs text-gray-500 mt-0.5 truncate">@mv.Module.Description</div>
                             }
                         </div>
-                        <span class="badge-info shrink-0">@mv.Addresses.Count 个地址</span>
+                        <span class="badge-info shrink-0">@mv.Urls.Count 个地址</span>
                     </div>
                     <div class="divide-y divide-gray-50">
-                        @foreach (var av in mv.Addresses)
+                        @foreach (var url in mv.Urls)
                         {
                             <div class="px-5 py-3 flex items-center justify-between gap-3">
-                                <div class="min-w-0">
-                                    @if (!string.IsNullOrEmpty(av.Url))
-                                    {
-                                        <a href="@av.Url"
-                                           target="_blank"
-                                           rel="noopener noreferrer"
-                                           class="text-sm font-medium text-blue-600 hover:text-blue-800 truncate block"
-                                           title="@av.Url">
-                                            @av.Url
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-sm text-gray-400">地址不完整</span>
-                                    }
-                                    <div class="text-xs text-gray-400 mono mt-0.5">
-                                        @av.Address.Scheme · @av.Address.Address
-                                        @(av.Address.Port is { } p ? $":{p}" : "")
-                                        @(string.IsNullOrEmpty(av.Address.Path) ? "" : av.Address.Path)
-                                    </div>
-                                </div>
-                                @if (!string.IsNullOrEmpty(av.Url))
-                                {
-                                    <a href="@av.Url" target="_blank" rel="noopener noreferrer"
-                                       class="btn-secondary btn-sm shrink-0" title="@av.Url">
-                                        <svg class="icon icon-sm"><use href="#i-external"></use></svg>打开
-                                    </a>
-                                }
+                                <a href="@url"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="text-sm font-medium text-blue-600 hover:text-blue-800 truncate"
+                                   title="@url">
+                                    @url
+                                </a>
+                                <a href="@url" target="_blank" rel="noopener noreferrer"
+                                   class="btn-secondary btn-sm shrink-0" title="@url">
+                                    <svg class="icon icon-sm"><use href="#i-external"></use></svg>打开
+                                </a>
                             </div>
                         }
                     </div>

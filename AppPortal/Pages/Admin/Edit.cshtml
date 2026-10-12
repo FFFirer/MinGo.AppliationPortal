@@ -10,7 +10,7 @@
     <div class="card card-pad">
         <h1 class="text-xl font-bold text-gray-900 mb-6">编辑应用</h1>
 
-        <form method="post">
+        <form method="post" id="appForm">
             <div class="space-y-5">
                 <div>
                     <label class="field-label" asp-for="App.Name">应用名称 *</label>
@@ -41,13 +41,13 @@
                             <svg class="icon icon-sm"><use href="#i-plus"></use></svg>添加模块
                         </button>
                     </div>
-                    <p class="field-hint mb-3">应用下可挂多个模块；每个地址一行，Host / 协议 / 地址 / 端口(可选) / 路径(可选) 都在行内。</p>
+                    <p class="field-hint mb-3">地址为完整 URL 字符串（须含 http:// 或 https://）。可直接粘贴，或用快捷生成按 Host/端口/路径一次生成多条。</p>
 
                     <div id="moduleList" class="space-y-4">
                         @for (var mi = 0; mi < Model.App.Modules.Count; mi++)
                         {
                             var mod = Model.App.Modules[mi];
-                            <div class="module-block rounded-2xl border border-gray-200/80 bg-gray-50/50 p-4">
+                            <div class="module-block rounded-2xl border border-gray-200/80 bg-gray-50/50 p-4" data-module-index="@mi">
                                 <div class="flex flex-wrap items-center gap-2 mb-3">
                                     <input class="input !w-auto flex-1 min-w-[10rem]" name="App.Modules[@mi].Name" value="@mod.Name" placeholder="模块名称" />
                                     <input class="input !w-20" name="App.Modules[@mi].Order" value="@mod.Order" type="number" placeholder="排序" />
@@ -63,36 +63,25 @@
 
                                 <div>
                                     <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-gray-500">地址（一行一个）</span>
-                                        <button type="button" class="btn-add-addr text-xs text-blue-600 hover:text-blue-800">+ 添加地址</button>
+                                        <span class="text-xs font-medium text-gray-500">地址（一行一个 URL）</span>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" class="btn-open-gen text-xs text-blue-600 hover:text-blue-800">快捷生成</button>
+                                            <button type="button" class="btn-add-addr text-xs text-blue-600 hover:text-blue-800">+ 添加</button>
+                                        </div>
                                     </div>
                                     <div class="addr-list space-y-2">
                                         @for (var ai = 0; ai < mod.Addresses.Count; ai++)
                                         {
-                                            var addr = mod.Addresses[ai];
                                             <div class="addr-row">
-                                                <select class="select !w-28 !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].HostId" data-host-select>
-                                                    <option value="">Host…</option>
-                                                    @foreach (var h in Model.Hosts)
-                                                    {
-                                                        <option value="@h.Id"
-                                                                data-addresses="@string.Join("|", h.Addresses)"
-                                                                selected="@(addr.HostId == h.Id)">
-                                                            @h.Name
-                                                        </option>
-                                                    }
-                                                </select>
-                                                <select class="select !w-[4.5rem] !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].Scheme">
-                                                    <option value="http" selected="@(addr.Scheme != "https")">http</option>
-                                                    <option value="https" selected="@(addr.Scheme == "https")">https</option>
-                                                </select>
-                                                <span class="sep">://</span>
-                                                <input class="input !w-28 !py-1.5 !text-sm !min-w-0 !shrink" name="App.Modules[@mi].Addresses[@ai].Address" value="@addr.Address" placeholder="10.0.0.5" />
-                                                <span class="sep">:</span>
-                                                <input class="input !w-16 !py-1.5 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].Port" value="@addr.Port" type="number" min="1" placeholder="端口" />
-                                                <span class="sep">/</span>
-                                                <input class="input !w-20 !py-1.5 !text-sm !shrink-0" name="App.Modules[@mi].Addresses[@ai].Path" value="@addr.Path" placeholder="路径(可选)" />
-                                                <button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 ml-auto">
+                                                <input class="input !py-1.5 !text-sm !min-w-0 !shrink"
+                                                       name="App.Modules[@mi].Addresses[@ai]"
+                                                       value="@mod.Addresses[ai]"
+                                                       placeholder="http://10.0.0.5:8080/admin"
+                                                       data-url-input />
+                                                <button type="button" class="btn-copy-addr text-gray-400 hover:text-blue-600 p-1 shrink-0" title="复制此行">
+                                                    <svg class="icon icon-sm"><use href="#i-plus"></use></svg>
+                                                </button>
+                                                <button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 shrink-0">
                                                     <svg class="icon icon-sm"><use href="#i-x"></use></svg>
                                                 </button>
                                             </div>
@@ -114,51 +103,132 @@
     </div>
 </div>
 
+<!-- URL 快捷生成弹窗 -->
+<div id="urlGenModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-gray-900/40" data-gen-close></div>
+    <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">快捷生成 URL</h3>
+                <button type="button" class="btn-ghost !p-2 text-gray-400" data-gen-close>
+                    <svg class="icon"><use href="#i-x"></use></svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="field-label">协议 *</label>
+                    <div class="flex gap-2">
+                        <label class="host-option"><input type="radio" name="genScheme" value="http" checked data-gen-field /> http</label>
+                        <label class="host-option"><input type="radio" name="genScheme" value="https" data-gen-field /> https</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">地址（可多选，将生成多条）*</label>
+                    <div id="genHosts" class="flex flex-wrap gap-2 mb-2">
+                        @foreach (var h in Model.Hosts)
+                        {
+                            <span class="text-xs text-gray-500 w-full">@h.Name</span>
+                            @foreach (var a in h.Addresses)
+                            {
+                                <label class="host-option">
+                                    <input type="checkbox" class="gen-addr" value="@a" data-gen-field />
+                                    <span class="mono">@a</span>
+                                </label>
+                            }
+                        }
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="genCustomAddr" class="input !py-2" placeholder="自定义地址，如 10.0.0.9" data-gen-field />
+                        <button type="button" id="btnAddCustomAddr" class="btn-secondary btn-sm whitespace-nowrap">加入</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">端口（可多选，与路径互斥多选）</label>
+                    <div class="flex flex-wrap gap-2 mb-2" id="genPorts">
+                        @foreach (var p in new[] { 80, 443, 8080, 8443, 3000, 5000 })
+                        {
+                            <label class="host-option">
+                                <input type="checkbox" class="gen-port" value="@p" data-gen-field />
+                                <span class="mono">@p</span>
+                            </label>
+                        }
+                    </div>
+                    <input id="genCustomPort" class="input !py-2" type="number" min="1" max="65535" placeholder="自定义端口（可空）" data-gen-field />
+                </div>
+
+                <div>
+                    <label class="field-label">路径（可空；多选时与端口互斥）</label>
+                    <div class="flex flex-wrap gap-2 mb-2" id="genPaths">
+                        @foreach (var path in new[] { "/", "/admin", "/api", "/console" })
+                        {
+                            <label class="host-option">
+                                <input type="checkbox" class="gen-path" value="@path" data-gen-field />
+                                <span class="mono">@path</span>
+                            </label>
+                        }
+                    </div>
+                    <input id="genCustomPath" class="input !py-2" placeholder="自定义路径，如 /app（可空）" data-gen-field />
+                </div>
+
+                <div>
+                    <label class="field-label">预览</label>
+                    <div id="genPreview" class="rounded-xl bg-gray-50 border border-gray-100 p-3 max-h-40 overflow-y-auto space-y-1">
+                        <p class="text-xs text-gray-400">选择地址后此处显示将生成的 URL</p>
+                    </div>
+                    <p class="field-hint">协议单选；地址可多选；端口与路径不可同时多选。最多 50 条。</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-5">
+                <button type="button" id="btnGenAppend" class="btn-primary">追加到模块</button>
+                <button type="button" class="btn-secondary" data-gen-close>取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         (function () {
-            function hostOptions(mi) {
-                var hosts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Hosts.Select(h => new {
-                    id = h.Id.ToString(),
-                    name = h.Name,
-                    addresses = string.Join("|", h.Addresses)
-                })));
-                return ['<option value="">Host…</option>'].concat(hosts.map(function (h) {
-                    return '<option value="' + h.id + '" data-addresses="' + h.addresses + '">' + h.name + '</option>';
-                })).join('');
-            }
-
-            function addrRowHtml(mi, ai) {
-                return [
-                    '<select class="select !w-28 !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].HostId" data-host-select>',
-                    hostOptions(mi),
-                    '</select>',
-                    '<select class="select !w-[4.5rem] !py-1.5 !px-2 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].Scheme">',
-                    '<option value="http">http</option><option value="https">https</option></select>',
-                    '<span class="sep">://</span>',
-                    '<input class="input !w-28 !py-1.5 !text-sm !min-w-0 !shrink" name="App.Modules[' + mi + '].Addresses[' + ai + '].Address" placeholder="10.0.0.5" />',
-                    '<span class="sep">:</span>',
-                    '<input class="input !w-16 !py-1.5 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].Port" type="number" min="1" placeholder="端口" />',
-                    '<span class="sep">/</span>',
-                    '<input class="input !w-20 !py-1.5 !text-sm !shrink-0" name="App.Modules[' + mi + '].Addresses[' + ai + '].Path" placeholder="路径(可选)" />',
-                    '<button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 ml-auto">',
-                    '<svg class="icon icon-sm"><use href="#i-x"></use></svg></button>'
-                ].join('');
-            }
+            var genModuleBlock = null;
 
             function reindex() {
                 document.querySelectorAll('.module-block').forEach(function (mod, mi) {
-                    mod.querySelectorAll('input,select').forEach(function (el) {
+                    mod.querySelectorAll('input,select,textarea').forEach(function (el) {
                         if (!el.name) return;
                         el.name = el.name.replace(/App\.Modules\[\d+\]/, 'App.Modules[' + mi + ']');
                     });
                     mod.querySelectorAll('.addr-row').forEach(function (row, ai) {
-                        row.querySelectorAll('input,select').forEach(function (el) {
-                            if (!el.name) return;
-                            el.name = el.name.replace(/Addresses\[\d+\]/, 'Addresses[' + ai + ']');
-                        });
+                        var input = row.querySelector('[data-url-input]');
+                        if (input) input.name = 'App.Modules[' + mi + '].Addresses[' + ai + ']';
                     });
                 });
+            }
+
+            function rowHtml(mi, ai, val) {
+                return [
+                    '<input class="input !py-1.5 !text-sm !min-w-0 !shrink" name="App.Modules[' + mi + '].Addresses[' + ai + ']" value="' + (val || '').replace(/"/g, '&quot;') + '" placeholder="http://10.0.0.5:8080/admin" data-url-input />',
+                    '<button type="button" class="btn-copy-addr text-gray-400 hover:text-blue-600 p-1 shrink-0" title="复制此行"><svg class="icon icon-sm"><use href="#i-copy"></use></svg></button>',
+                    '<button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 shrink-0"><svg class="icon icon-sm"><use href="#i-x"></use></svg></button>'
+                ].join('');
+            }
+
+            function appendRows(block, urls) {
+                var list = block.querySelector('.addr-list');
+                var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
+                urls.forEach(function (u) {
+                    var ai = list.querySelectorAll('.addr-row').length;
+                    var row = document.createElement('div');
+                    row.className = 'addr-row';
+                    row.innerHTML = rowHtml(mi, ai, u);
+                    list.appendChild(row);
+                });
+                // drop empty placeholder rows if we have real urls
+                bind();
+                reindex();
             }
 
             function bind() {
@@ -175,13 +245,36 @@
                     btn.onclick = function () {
                         var block = btn.closest('.module-block');
                         var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
-                        var ai = block.querySelectorAll('.addr-row').length;
+                        var list = block.querySelector('.addr-list');
+                        var ai = list.querySelectorAll('.addr-row').length;
                         var row = document.createElement('div');
                         row.className = 'addr-row';
-                        row.innerHTML = addrRowHtml(mi, ai);
-                        block.querySelector('.addr-list').appendChild(row);
+                        row.innerHTML = rowHtml(mi, ai, '');
+                        list.appendChild(row);
                         bind();
                         reindex();
+                        row.querySelector('[data-url-input]').focus();
+                    };
+                });
+
+                document.querySelectorAll('.btn-copy-addr').forEach(function (btn) {
+                    btn.onclick = function () {
+                        var row = btn.closest('.addr-row');
+                        var input = row.querySelector('[data-url-input]');
+                        var val = input ? input.value : '';
+                        var block = btn.closest('.module-block');
+                        var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
+                        var list = block.querySelector('.addr-list');
+                        var ai = list.querySelectorAll('.addr-row').length;
+                        var copy = document.createElement('div');
+                        copy.className = 'addr-row';
+                        copy.innerHTML = rowHtml(mi, ai, val);
+                        row.after(copy);
+                        bind();
+                        reindex();
+                        var ni = copy.querySelector('[data-url-input]');
+                        ni.focus();
+                        ni.setSelectionRange(ni.value.length, ni.value.length);
                     };
                 });
 
@@ -195,19 +288,117 @@
                     };
                 });
 
-                document.querySelectorAll('[data-host-select]').forEach(function (sel) {
-                    sel.onchange = function () {
-                        var addrs = (sel.options[sel.selectedIndex].getAttribute('data-addresses') || '')
-                            .split('|').filter(Boolean);
-                        if (!addrs.length) return;
-                        var row = sel.closest('.addr-row');
-                        var addrInput = row.querySelector('input[name$=".Address"]');
-                        if (addrInput && !addrInput.value && addrs[0]) {
-                            addrInput.value = addrs[0];
-                        }
+                document.querySelectorAll('.btn-open-gen').forEach(function (btn) {
+                    btn.onclick = function () {
+                        genModuleBlock = btn.closest('.module-block');
+                        openGen();
                     };
                 });
             }
+
+            /* ---- generator modal ---- */
+            function openGen() {
+                document.getElementById('urlGenModal').classList.remove('hidden');
+                updatePreview();
+            }
+
+            function closeGen() {
+                document.getElementById('urlGenModal').classList.add('hidden');
+            }
+
+            function checkedValues(selector) {
+                return Array.prototype.map.call(document.querySelectorAll(selector + ':checked'), function (el) { return el.value; });
+            }
+
+            function buildUrls() {
+                var scheme = (document.querySelector('input[name="genScheme"]:checked') || {}).value || 'http';
+                var addrs = checkedValues('.gen-addr');
+                var customAddr = (document.getElementById('genCustomAddr').value || '').trim();
+                if (customAddr) addrs.push(customAddr);
+                addrs = addrs.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+
+                var ports = checkedValues('.gen-port');
+                var customPort = (document.getElementById('genCustomPort').value || '').trim();
+                if (customPort) ports.push(customPort);
+                ports = ports.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+
+                var paths = checkedValues('.gen-path');
+                var customPath = (document.getElementById('genCustomPath').value || '').trim();
+                if (customPath) paths.push(customPath.startsWith('/') ? customPath : '/' + customPath);
+                paths = paths.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+
+                if (ports.length > 1 && paths.length > 1) {
+                    return { error: '端口与路径不可同时多选', urls: [] };
+                }
+
+                var portList = ports.length ? ports : [''];
+                var pathList = paths.length ? paths : [''];
+                var urls = [];
+                addrs.forEach(function (a) {
+                    portList.forEach(function (p) {
+                        pathList.forEach(function (pa) {
+                            var portSeg = p ? ':' + p : '';
+                            var pathSeg = pa && pa !== '/' ? pa : (pa === '/' ? '/' : '');
+                            urls.push(scheme + '://' + a + portSeg + pathSeg);
+                        });
+                    });
+                });
+
+                if (urls.length > 50) {
+                    urls = urls.slice(0, 50);
+                }
+                return { error: null, urls: urls };
+            }
+
+            function updatePreview() {
+                var el = document.getElementById('genPreview');
+                var r = buildUrls();
+                if (r.error) {
+                    el.innerHTML = '<p class="text-xs text-red-500">' + r.error + '</p>';
+                    return;
+                }
+                if (!r.urls.length) {
+                    el.innerHTML = '<p class="text-xs text-gray-400">选择地址后此处显示将生成的 URL</p>';
+                    return;
+                }
+                el.innerHTML = r.urls.map(function (u) {
+                    return '<div class="text-xs mono text-gray-700 truncate">' + u + '</div>';
+                }).join('');
+            }
+
+            document.querySelectorAll('[data-gen-close]').forEach(function (el) {
+                el.addEventListener('click', closeGen);
+            });
+
+            document.querySelectorAll('#urlGenModal [data-gen-field]').forEach(function (el) {
+                el.addEventListener('change', updatePreview);
+                el.addEventListener('input', updatePreview);
+            });
+
+            document.getElementById('btnAddCustomAddr').addEventListener('click', function () {
+                var input = document.getElementById('genCustomAddr');
+                var v = (input.value || '').trim();
+                if (!v) return;
+                var wrap = document.getElementById('genHosts');
+                var label = document.createElement('label');
+                label.className = 'host-option';
+                label.innerHTML = '<input type="checkbox" class="gen-addr" value="' + v.replace(/"/g, '&quot;') + '" checked data-gen-field /> <span class="mono">' + v + '</span>';
+                wrap.appendChild(label);
+                label.querySelector('input').addEventListener('change', updatePreview);
+                input.value = '';
+                updatePreview();
+            });
+
+            document.getElementById('btnGenAppend').addEventListener('click', function () {
+                var r = buildUrls();
+                if (r.error) {
+                    updatePreview();
+                    return;
+                }
+                if (!r.urls.length || !genModuleBlock) return;
+                appendRows(genModuleBlock, r.urls);
+                closeGen();
+            });
 
             document.getElementById('btnAddModule').addEventListener('click', function () {
                 var list = document.getElementById('moduleList');
@@ -223,8 +414,9 @@
                     '<button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 hover:text-red-500 btn-remove-module"><svg class="icon"><use href="#i-trash"></use></svg></button>',
                     '</div>',
                     '<div>',
-                    '<div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-gray-500">地址（一行一个）</span>',
-                    '<button type="button" class="btn-add-addr text-xs text-blue-600 hover:text-blue-800">+ 添加地址</button></div>',
+                    '<div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-gray-500">地址（一行一个 URL）</span>',
+                    '<div class="flex items-center gap-2"><button type="button" class="btn-open-gen text-xs text-blue-600 hover:text-blue-800">快捷生成</button>',
+                    '<button type="button" class="btn-add-addr text-xs text-blue-600 hover:text-blue-800">+ 添加</button></div></div>',
                     '<div class="addr-list space-y-2"></div>',
                     '</div>'
                 ].join('');
@@ -232,6 +424,23 @@
                 div.querySelector('.btn-add-addr').click();
                 bind();
                 reindex();
+            });
+
+            // Validate scheme on submit
+            document.getElementById('appForm').addEventListener('submit', function (e) {
+                var bad = null;
+                document.querySelectorAll('[data-url-input]').forEach(function (input) {
+                    var v = (input.value || '').trim();
+                    if (v && !/^https?:\/\//i.test(v)) {
+                        bad = input;
+                    }
+                });
+                if (bad) {
+                    e.preventDefault();
+                    bad.classList.add('input-error');
+                    bad.focus();
+                    alert('地址必须以 http:// 或 https:// 开头');
+                }
             });
 
             bind();

@@ -19,9 +19,7 @@ public class DetailModel : PageModel
     public List<ModuleView> ModuleViews { get; set; } = new();
     public string? SourceLabel { get; set; }
 
-    public sealed record AddressView(ModuleAddress Address, string Url);
-
-    public sealed record ModuleView(AppModule Module, List<AddressView> Addresses);
+    public sealed record ModuleView(AppModule Module, List<string> Urls);
 
     public async Task<IActionResult> OnGetAsync(string id)
     {
@@ -41,15 +39,7 @@ public class DetailModel : PageModel
             .Where(m => m.IsEnabled)
             .OrderBy(m => m.Order)
             .ThenBy(m => m.Name)
-            .Select(m => new ModuleView(
-                m,
-                m.Addresses
-                    .Select(a =>
-                    {
-                        var r = UrlResolver.Resolve(a);
-                        return new AddressView(a, r.Url);
-                    })
-                    .ToList()))
+            .Select(m => new ModuleView(m, m.Addresses.Where(u => !string.IsNullOrWhiteSpace(u)).ToList()))
             .ToList();
 
         SourceLabel = app.SourceId is not null ? $"Source:{app.SourceId}" : "手工录入";

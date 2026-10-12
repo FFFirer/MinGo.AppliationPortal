@@ -14,7 +14,7 @@ public class AppEditModel
         new AppModule
         {
             Name = "访问入口",
-            Addresses = new List<ModuleAddress> { new() }
+            Addresses = new List<string> { string.Empty }
         }
     };
 
@@ -37,21 +37,21 @@ public class AppEditModel
                     IsEnabled = m.IsEnabled,
                     Order = m.Order == 0 ? i : m.Order,
                     SourceService = m.SourceService,
-                                        Addresses = (m.Addresses ?? new List<ModuleAddress>())
-                        .Where(a => !string.IsNullOrWhiteSpace(a.Address))
-                        .Select(a => new ModuleAddress
-                        {
-                            HostId = a.HostId,
-                            Scheme = string.Equals(a.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http",
-                            Address = a.Address.Trim(),
-                            Port = a.Port is > 0 ? a.Port : null,
-                            Path = string.IsNullOrWhiteSpace(a.Path) ? null : a.Path.Trim()
-                        })
+                    Addresses = (m.Addresses ?? new List<string>())
+                        .Select(a => a?.Trim() ?? "")
+                        .Where(a => a.Length > 0)
+                        .Where(IsValidUrl)
                         .ToList()
                 })
                 .Where(m => m.Addresses.Count > 0)
                 .ToList()
         };
+    }
+
+    public static bool IsValidUrl(string url)
+    {
+        return url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
     }
 
     public static AppEditModel FromEntry(AppEntry entry)
@@ -71,7 +71,7 @@ public class AppEditModel
                     IsEnabled = m.IsEnabled,
                     Order = m.Order,
                     SourceService = m.SourceService,
-                                        Addresses = m.Addresses.ToList()
+                    Addresses = m.Addresses.Count > 0 ? m.Addresses.ToList() : new List<string> { string.Empty }
                 })
                 .ToList()
         };

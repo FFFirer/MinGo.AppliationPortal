@@ -53,12 +53,13 @@ public class ImportService : IImportService
                 Order = index,
                 Addresses = m.Endpoints
                     .Where(e => e.Selected)
-                    .Select(e => new ModuleAddress
+                    .Select(e =>
                     {
-                        Scheme = m.Scheme,
-                        Address = e.Address,
-                        Port = e.HostPort,
-                        Path = m.Path
+                        var scheme = e.Scheme == "https" ? "https" : "http";
+                        var host = string.IsNullOrWhiteSpace(e.Address) ? "127.0.0.1" : e.Address.Trim();
+                        var port = e.HostPort is { } p ? $":{p}" : "";
+                        var path = string.IsNullOrWhiteSpace(m.Path) ? "" : (m.Path.StartsWith("/") ? m.Path : "/" + m.Path);
+                        return $"{scheme}://{host}{port}{path}";
                     })
                     .ToList()
             })
