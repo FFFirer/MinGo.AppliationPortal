@@ -53,17 +53,12 @@ public class PortainerAppSource : IAppSource
 
             foreach (var mapping in group)
             {
-                var isHttp = mapping.Type.Equals("tcp", StringComparison.OrdinalIgnoreCase);
-                var kind = mapping.Type.Equals("udp", StringComparison.OrdinalIgnoreCase)
-                    ? EndpointKind.Udp
-                    : EndpointKind.Http;
-
                 module.Endpoints.Add(new AppDraftEndpoint
                 {
                     DisplayName = mapping.PublicPort is { } pub
                         ? $"{group.Key} · {pub}→{mapping.PrivatePort}"
                         : $"{group.Key} · {mapping.PrivatePort}",
-                    Kind = kind,
+                    Scheme = "http",
                     HostPort = mapping.PublicPort,
                     ContainerPort = mapping.PrivatePort,
                     Selected = mapping.PublicPort is not null
@@ -87,7 +82,7 @@ public class PortainerAppSource : IAppSource
                     m.Endpoints
                         .OrderBy(e => e.HostPort ?? 0)
                         .ThenBy(e => e.ContainerPort ?? 0)
-                        .Select(e => $"{e.HostPort}:{e.ContainerPort}:{e.Kind}"));
+                        .Select(e => $"{e.HostPort}:{e.ContainerPort}"));
                 return $"{m.Name}|{eps}";
             });
         return string.Join(";", parts);

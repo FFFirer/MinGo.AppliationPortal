@@ -56,7 +56,7 @@ public class ImportService : IImportService
                     .Select(e => new AppEndpoint
                     {
                         DisplayName = e.DisplayName,
-                        Kind = e.Kind,
+                        Scheme = e.Scheme,
                         Port = e.HostPort,
                         ContainerPort = e.ContainerPort
                     })

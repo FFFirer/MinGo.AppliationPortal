@@ -16,8 +16,7 @@ public static class UrlResolver
         if (!string.IsNullOrWhiteSpace(endpoint.UrlOverride))
         {
             var overrideUrl = endpoint.UrlOverride.Trim();
-            var clickable = endpoint.Kind == EndpointKind.Http;
-            return new ResolvedEndpoint(endpoint, clickable ? overrideUrl : null, overrideUrl, true, clickable);
+            return new ResolvedEndpoint(endpoint, overrideUrl, overrideUrl, true, true);
         }
 
         if (host is null || string.IsNullOrWhiteSpace(host.Address))
@@ -25,30 +24,22 @@ public static class UrlResolver
             return new ResolvedEndpoint(endpoint, null, "当前网络不可达", false, false);
         }
 
-        // Entry pinned to a specific host that is not the active one
         if (endpoint.HostId is { } pinned && host.Id != pinned)
         {
             return new ResolvedEndpoint(endpoint, null, "当前网络不可达", false, false);
         }
 
         var address = host.Address.Trim();
-        if (endpoint.Kind is EndpointKind.Tcp or EndpointKind.Udp)
-        {
-            var portText = endpoint.Port is { } p ? $":{p}" : "";
-            var text = $"{address}{portText}";
-            return new ResolvedEndpoint(endpoint, null, text, true, false);
-        }
-
-        var scheme = endpoint.SchemeOverride ?? host.SchemeDefault ?? "http";
-        if (scheme is not ("http" or "https"))
-        {
-            scheme = "http";
-        }
-
+        var scheme = NormalizeScheme(endpoint.Scheme);
         var path = NormalizePath(endpoint.Path);
         var portSegment = BuildPortSegment(scheme, endpoint.Port);
         var url = $"{scheme}://{address}{portSegment}{path}";
         return new ResolvedEndpoint(endpoint, url, url, true, true);
+    }
+
+    private static string NormalizeScheme(string? scheme)
+    {
+        return string.Equals(scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
     }
 
     private static string BuildPortSegment(string scheme, int? port)

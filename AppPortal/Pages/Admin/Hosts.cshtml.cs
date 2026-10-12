@@ -34,7 +34,6 @@ public class HostsModel : PageModel
             return RedirectToPage(new { message = "名称与地址必填" });
         }
 
-        NewHost.SchemeDefault = string.IsNullOrWhiteSpace(NewHost.SchemeDefault) ? "http" : NewHost.SchemeDefault;
         await _hostService.CreateAsync(NewHost);
         return RedirectToPage();
     }

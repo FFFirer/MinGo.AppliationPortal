@@ -106,7 +106,7 @@ internal static class AppMigration
                 .Select(u => new AppEndpoint
                 {
                     DisplayName = string.IsNullOrWhiteSpace(u.DisplayName) ? "入口" : u.DisplayName.Trim(),
-                    Kind = EndpointKind.Http,
+                    Scheme = "http",
                     UrlOverride = u.Url.Trim()
                 })
                 .ToList()

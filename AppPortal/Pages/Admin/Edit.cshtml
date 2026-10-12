@@ -84,10 +84,9 @@
                                         var ep = mod.Endpoints[ei];
                                         <div class="endpoint-row endpoint-edit">
                                             <input class="input ep-name !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].DisplayName" value="@ep.DisplayName" placeholder="显示名" />
-                                            <select class="input ep-kind !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Kind">
-                                                <option value="Http" selected="@(ep.Kind == EndpointKind.Http)">Http</option>
-                                                <option value="Tcp" selected="@(ep.Kind == EndpointKind.Tcp)">Tcp</option>
-                                                <option value="Udp" selected="@(ep.Kind == EndpointKind.Udp)">Udp</option>
+                                            <select class="input ep-scheme !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Scheme">
+                                                <option value="http" selected="@(ep.Scheme != "https")">http</option>
+                                                <option value="https" selected="@(ep.Scheme == "https")">https</option>
                                             </select>
                                             <input class="input ep-port !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Port" value="@ep.Port" type="number" placeholder="端口" />
                                             <input class="input ep-path !py-1.5 !text-sm" name="App.Modules[@mi].Endpoints[@ei].Path" value="@ep.Path" placeholder="路径 /admin" />
@@ -173,7 +172,7 @@
                         row.className = 'endpoint-row endpoint-edit';
                         row.innerHTML = [
                             '<input class="input ep-name !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].DisplayName" placeholder="显示名" />',
-                            '<select class="input ep-kind !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Kind"><option value="Http">Http</option><option value="Tcp">Tcp</option><option value="Udp">Udp</option></select>',
+                            '<select class="input ep-scheme !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Scheme"><option value="http">http</option><option value="https">https</option></select>',
                             '<input class="input ep-port !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Port" type="number" placeholder="端口" />',
                             '<input class="input ep-path !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Path" placeholder="路径 /admin" />',
                             '<input class="input ep-url !py-1.5 !text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].UrlOverride" placeholder="完整 URL 可选" />',

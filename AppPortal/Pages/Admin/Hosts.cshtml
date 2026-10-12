@@ -26,7 +26,6 @@
                 <tr>
                     <th>名称</th>
                     <th>地址</th>
-                    <th>协议</th>
                     <th>默认</th>
                     <th class="!text-right">操作</th>
                 </tr>
@@ -37,7 +36,6 @@
                     <tr>
                         <td class="!font-medium !text-gray-900">@h.Name</td>
                         <td class="mono !text-gray-600">@h.Address</td>
-                        <td>@h.SchemeDefault</td>
                         <td>
                             @if (h.IsDefault)
                             {
@@ -56,7 +54,7 @@
                 @if (Model.Hosts.Count == 0)
                 {
                     <tr>
-                        <td colspan="5" class="!py-12 text-center text-gray-400">暂无 Host，请在下方添加</td>
+                        <td colspan="4" class="!py-12 text-center text-gray-400">暂无 Host，请在下方添加</td>
                     </tr>
                 }
             </tbody>
@@ -74,13 +72,6 @@
             <div>
                 <label class="field-label">地址 *</label>
                 <input asp-for="NewHost.Address" class="input" placeholder="10.0.0.5 或 portal.example.com" />
-            </div>
-            <div>
-                <label class="field-label">默认协议</label>
-                <select asp-for="NewHost.SchemeDefault" class="select">
-                    <option value="http">http</option>
-                    <option value="https">https</option>
-                </select>
             </div>
             <div class="flex items-end gap-4">
                 <label class="check-label pb-2.5">

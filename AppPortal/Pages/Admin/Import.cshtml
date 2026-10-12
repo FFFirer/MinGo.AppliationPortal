@@ -94,7 +94,7 @@
                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500/30" />
                                     <span class="w-40 truncate font-medium text-gray-800">@ep.DisplayName</span>
                                     <span class="text-xs text-gray-500 mono">
-                                        @(ep.HostPort?.ToString() ?? "—") → @(ep.ContainerPort?.ToString() ?? "—") · @ep.Kind
+                                        @(ep.HostPort?.ToString() ?? "—") → @(ep.ContainerPort?.ToString() ?? "—") · @ep.Scheme
                                     </span>
                                 </div>
                             }

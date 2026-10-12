@@ -45,12 +45,11 @@ public class AppEditModel
                         .Select(e => new AppEndpoint
                         {
                             DisplayName = string.IsNullOrWhiteSpace(e.DisplayName) ? "入口" : e.DisplayName.Trim(),
-                            Kind = e.Kind,
+                            Scheme = string.IsNullOrWhiteSpace(e.Scheme) ? "http" : e.Scheme.Trim().ToLowerInvariant() == "https" ? "https" : "http",
                             HostId = e.HostId,
                             Port = e.Port,
                             ContainerPort = e.ContainerPort,
                             Path = string.IsNullOrWhiteSpace(e.Path) ? null : e.Path.Trim(),
-                            SchemeOverride = string.IsNullOrWhiteSpace(e.SchemeOverride) ? null : e.SchemeOverride.Trim(),
                             UrlOverride = string.IsNullOrWhiteSpace(e.UrlOverride) ? null : e.UrlOverride.Trim()
                         })
                         .ToList()
