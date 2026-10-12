@@ -17,23 +17,36 @@ public class AppService : IAppService
     public Task<List<AppEntry>> GetAllAppsAsync()
     {
         var apps = _apps.FindAll().OrderBy(a => a.SortOrder).ToList();
+        foreach (var app in apps)
+        {
+            AppMigration.EnsureModules(app);
+        }
         return Task.FromResult(apps);
     }
 
     public Task<List<AppEntry>> GetEnabledAppsAsync()
     {
         var apps = _apps.Find(a => a.IsEnabled).OrderBy(a => a.SortOrder).ToList();
+        foreach (var app in apps)
+        {
+            AppMigration.EnsureModules(app);
+        }
         return Task.FromResult(apps);
     }
 
     public Task<AppEntry?> GetByIdAsync(ObjectId id)
     {
         var app = _apps.FindById(id);
+        if (app is not null)
+        {
+            AppMigration.EnsureModules(app);
+        }
         return Task.FromResult<AppEntry?>(app);
     }
 
     public Task CreateAsync(AppEntry app)
     {
+        AppMigration.EnsureModules(app);
         app.CreatedAt = DateTime.UtcNow;
         app.UpdatedAt = DateTime.UtcNow;
         _apps.Insert(app);
@@ -42,6 +55,7 @@ public class AppService : IAppService
 
     public Task UpdateAsync(AppEntry app)
     {
+        AppMigration.EnsureModules(app);
         app.UpdatedAt = DateTime.UtcNow;
         _apps.Update(app);
         return Task.CompletedTask;
@@ -58,10 +72,46 @@ public class AppService : IAppService
         var app = _apps.FindById(id);
         if (app is not null)
         {
+            AppMigration.EnsureModules(app);
             app.IsEnabled = !app.IsEnabled;
             app.UpdatedAt = DateTime.UtcNow;
             _apps.Update(app);
         }
         return Task.CompletedTask;
+    }
+}
+
+internal static class AppMigration
+{
+    public static void EnsureModules(AppEntry app)
+    {
+        if (app.Modules.Count > 0)
+        {
+            return;
+        }
+
+        if (app.Urls is not { Count: > 0 })
+        {
+            app.Modules = new List<AppModule>();
+            return;
+        }
+
+        var module = new AppModule
+        {
+            Name = "访问入口",
+            IsEnabled = true,
+            Order = 0,
+            Endpoints = app.Urls
+                .Where(u => !string.IsNullOrWhiteSpace(u.Url))
+                .Select(u => new AppEndpoint
+                {
+                    DisplayName = string.IsNullOrWhiteSpace(u.DisplayName) ? "入口" : u.DisplayName.Trim(),
+                    Kind = EndpointKind.Http,
+                    UrlOverride = u.Url.Trim()
+                })
+                .ToList()
+        };
+
+        app.Modules = new List<AppModule> { module };
     }
 }

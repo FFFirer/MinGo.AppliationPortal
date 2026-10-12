@@ -1,5 +1,6 @@
 using AppPortal.Models;
 using AppPortal.Services;
+using LiteDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -8,44 +9,56 @@ namespace AppPortal.Pages.Admin;
 public class CreateModel : PageModel
 {
     private readonly IAppService _appService;
+    private readonly IHostService _hostService;
 
     [BindProperty]
-    public AppEntry App { get; set; } = new()
-    {
-        Urls = new List<AppUrl> { new() }
-    };
+    public AppEditModel App { get; set; } = new();
 
-    public CreateModel(IAppService appService)
+    public List<AccessHost> Hosts { get; set; } = new();
+    public List<ObjectId> SelectedHostIds { get; set; } = new();
+
+    public CreateModel(IAppService appService, IHostService hostService)
     {
         _appService = appService;
+        _hostService = hostService;
     }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
+        Hosts = await _hostService.GetAllAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        Hosts = await _hostService.GetAllAsync();
+        SelectedHostIds = App.HostRefs.Select(r => r.HostId).ToList();
+
         if (string.IsNullOrWhiteSpace(App.Name))
         {
             ModelState.AddModelError("App.Name", "应用名称不能为空");
         }
 
-        // Validate at least one URL is present and non-empty
-        var validUrls = App.Urls?.Where(u => !string.IsNullOrWhiteSpace(u.Url)).ToList() ?? new List<AppUrl>();
-        if (validUrls.Count == 0)
+        var entry = AppEditModel.ToEntry(App);
+        entry.HostRefs = SelectedHostIds
+            .Distinct()
+            .Select(id => new HostRef { HostId = id })
+            .ToList();
+        if (entry.HostRefs.Count > 0)
         {
-            ModelState.AddModelError("App.Urls", "至少需要一个访问地址");
+            entry.HostRefs[0].IsPreferred = true;
+        }
+
+        if (entry.Modules.Count == 0)
+        {
+            ModelState.AddModelError("App.Modules", "至少需要一个模块下的一个有效入口");
         }
 
         if (!ModelState.IsValid)
         {
-            App.Urls = validUrls.Count > 0 ? validUrls : new List<AppUrl> { new() };
             return Page();
         }
 
-        App.Urls = validUrls;
-        await _appService.CreateAsync(App);
+        await _appService.CreateAsync(entry);
         return RedirectToPage("Index");
     }
 }

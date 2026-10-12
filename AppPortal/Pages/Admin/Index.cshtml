@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model AppPortal.Pages.Admin.IndexModel
 @{
     ViewData["Title"] = "管理后台";
@@ -9,12 +9,16 @@
         <h1 class="text-2xl font-bold text-gray-900">应用管理</h1>
         <p class="text-sm text-gray-500 mt-1">维护应用列表，管理启用/禁用状态</p>
     </div>
-    <a class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium" asp-page="Create">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        新增应用
-    </a>
+    <div class="flex flex-wrap items-center gap-2">
+        <a class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50" asp-page="Hosts">Host 目录</a>
+        <a class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50" asp-page="Sources">数据源 / 导入</a>
+        <a class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium" asp-page="Create">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            新增应用
+        </a>
+    </div>
 </div>
 
 @if (TempData["Error"] is string errorMsg)
@@ -37,7 +41,8 @@ else
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200">
                         <th class="text-left px-4 py-3 font-medium text-gray-600">名称</th>
-                        <th class="text-left px-4 py-3 font-medium text-gray-600">地址数</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">模块</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">来源</th>
                         <th class="text-left px-4 py-3 font-medium text-gray-600">排序</th>
                         <th class="text-left px-4 py-3 font-medium text-gray-600">状态</th>
                         <th class="text-right px-4 py-3 font-medium text-gray-600">操作</th>
@@ -68,7 +73,8 @@ else
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-gray-600">@app.Urls.Count 个</td>
+                            <td class="px-4 py-3 text-gray-600">@app.Modules.Count 个</td>
+                            <td class="px-4 py-3 text-xs text-gray-500">@(app.SourceId is null ? "手工" : "导入")</td>
                             <td class="px-4 py-3 text-gray-600">@app.SortOrder</td>
                             <td class="px-4 py-3">
                                 @if (app.IsEnabled)

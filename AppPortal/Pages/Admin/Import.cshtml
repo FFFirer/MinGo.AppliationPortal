@@ -1,0 +1,107 @@
+@page "{sourceId}"
+@model AppPortal.Pages.Admin.ImportModel
+@{
+    ViewData["Title"] = "从数据源导入";
+}
+
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <a class="text-sm text-blue-600 hover:text-blue-800" asp-page="Sources">&larr; 返回数据源</a>
+    </div>
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">导入应用</h1>
+        @if (Model.Source is not null)
+        {
+            <p class="text-sm text-gray-500 mt-1">数据源：@Model.Source.Name · @Model.Source.Type</p>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="bg-red-50 text-red-700 rounded-lg p-3 text-sm mb-4">@Model.Error</div>
+    }
+
+    @if (Model.Draft is null)
+    {
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">名称</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">类型</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">元数据</th>
+                        <th class="text-right px-4 py-3 font-medium text-gray-600">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach (var c in Model.Candidates)
+                    {
+                        <tr>
+                            <td class="px-4 py-3 font-medium text-gray-900">@c.Name</td>
+                            <td class="px-4 py-3 text-gray-600">@c.Kind</td>
+                            <td class="px-4 py-3 text-xs text-gray-500">@c.Meta</td>
+                            <td class="px-4 py-3 text-right">
+                                <a class="text-xs px-3 py-1.5 rounded-md border border-blue-200 text-blue-600 hover:bg-blue-50"
+                                   asp-page="Import"
+                                   asp-route-sourceId="@Model.Source?.Id"
+                                   asp-route-externalId="@c.ExternalId">
+                                    预览
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Candidates.Count == 0)
+                    {
+                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">未找到 stack</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <form method="post" asp-page-handler="Import" asp-route-sourceId="@Model.Source?.Id">
+            <input type="hidden" name="SelectedExternalId" value="@Model.Draft.ExternalId" />
+            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">@Model.Draft.Name</h2>
+                    <p class="text-sm text-gray-500">@Model.Draft.Description</p>
+                    <p class="text-xs text-gray-400 mt-1">ExternalId：@Model.Draft.ExternalId</p>
+                </div>
+
+                @for (var mi = 0; mi < Model.Draft.Modules.Count; mi++)
+                {
+                    var mod = Model.Draft.Modules[mi];
+                    <div class="border border-gray-100 rounded-lg p-4">
+                        <div class="flex items-center gap-3 mb-3">
+                            <label class="text-xs text-gray-500">模块名</label>
+                            <input class="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm" name="ModuleName_@mi" value="@mod.Name" />
+                            <span class="text-xs text-gray-400">service: @mod.SourceService</span>
+                        </div>
+                        <div class="space-y-2">
+                            @for (var ei = 0; ei < mod.Endpoints.Count; ei++)
+                            {
+                                var ep = mod.Endpoints[ei];
+                                <div class="flex items-center gap-3 text-sm">
+                                    <input type="checkbox" name="Selected_@(mi)_@(ei)" value="true" checked="@ep.Selected" />
+                                    <span class="w-40 truncate">@ep.DisplayName</span>
+                                    <span class="text-xs text-gray-500 font-mono">
+                                        @(ep.HostPort?.ToString() ?? "—") → @(ep.ContainerPort?.ToString() ?? "—") · @ep.Kind
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium">确认导入</button>
+                    <a class="text-sm text-gray-600 hover:text-gray-900"
+                       asp-page="Import"
+                       asp-route-sourceId="@Model.Source?.Id">返回列表</a>
+                </div>
+            </div>
+        </form>
+    }
+</div>

@@ -1,0 +1,84 @@
+@page
+@model AppPortal.Pages.Admin.HostsModel
+@{
+    ViewData["Title"] = "Host 管理";
+}
+
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <a class="text-sm text-blue-600 hover:text-blue-800" asp-page="Index">&larr; 返回管理列表</a>
+    </div>
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Host 目录</h1>
+            <p class="text-sm text-gray-500 mt-1">全局可访问主机，应用可引用；详情页按 Host 解析入口地址</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="bg-amber-50 text-amber-800 rounded-lg p-3 text-sm mb-4">@Model.Message</div>
+    }
+
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="text-left px-4 py-3 font-medium text-gray-600">名称</th>
+                    <th class="text-left px-4 py-3 font-medium text-gray-600">地址</th>
+                    <th class="text-left px-4 py-3 font-medium text-gray-600">默认协议</th>
+                    <th class="text-left px-4 py-3 font-medium text-gray-600">默认</th>
+                    <th class="text-right px-4 py-3 font-medium text-gray-600">操作</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @foreach (var h in Model.Hosts)
+                {
+                    <tr>
+                        <td class="px-4 py-3 font-medium text-gray-900">@h.Name</td>
+                        <td class="px-4 py-3 text-gray-600 font-mono text-xs">@h.Address</td>
+                        <td class="px-4 py-3 text-gray-600">@h.SchemeDefault</td>
+                        <td class="px-4 py-3">@(h.IsDefault ? "是" : "")</td>
+                        <td class="px-4 py-3 text-right">
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
+                                <button type="submit" class="text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-500 hover:bg-red-50">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Hosts.Count == 0)
+                {
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">暂无 Host</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">新增 Host</h2>
+        <form method="post" asp-page-handler="Create" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">名称 *</label>
+                <input asp-for="NewHost.Name" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="办公网" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">地址 *</label>
+                <input asp-for="NewHost.Address" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="10.0.0.5 或 portal.example.com" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">默认协议</label>
+                <select asp-for="NewHost.SchemeDefault" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                    <option value="http">http</option>
+                    <option value="https">https</option>
+                </select>
+            </div>
+            <div class="flex items-end gap-4">
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input asp-for="NewHost.IsDefault" /> 设为全局默认
+                </label>
+                <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">添加</button>
+            </div>
+        </form>
+    </div>
+</div>

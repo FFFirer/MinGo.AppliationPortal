@@ -1,10 +1,10 @@
-﻿@page
+@page
 @model AppPortal.Pages.Admin.CreateModel
 @{
     ViewData["Title"] = "新增应用";
 }
 
-<div class="max-w-2xl mx-auto">
+<div class="max-w-3xl mx-auto">
     <div class="mb-6">
         <a class="text-sm text-blue-600 hover:text-blue-800 transition-colors" asp-page="Index">&larr; 返回管理列表</a>
     </div>
@@ -16,58 +16,98 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.Name">应用名称 *</label>
-                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow @(ModelState["App.Name"]?.Errors.Count > 0 ? "border-red-500" : "")" asp-for="App.Name" />
+                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.Name" />
                     <span class="text-xs text-red-500" asp-validation-for="App.Name"></span>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.Description">描述</label>
-                    <textarea class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" asp-for="App.Description" rows="3"></textarea>
+                    <textarea class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.Description" rows="2"></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.IconUrl">图标地址</label>
-                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" asp-for="App.IconUrl" placeholder="https://example.com/icon.png" />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.SortOrder">排序</label>
-                    <input class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" asp-for="App.SortOrder" type="number" min="0" />
-                </div>
-
-                <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-sm font-medium text-gray-700">访问地址 *</label>
-                        <button type="button" id="btnAddUrl" class="text-xs text-blue-600 hover:text-blue-800 transition-colors">+ 添加地址</button>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.IconUrl">图标地址</label>
+                        <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.IconUrl" placeholder="https://example.com/icon.png" />
                     </div>
-                    <div id="urlList" class="space-y-2">
-                        @for (var i = 0; i < Model.App.Urls.Count; i++)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.SortOrder">排序</label>
+                        <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.SortOrder" type="number" min="0" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">可达 Host</label>
+                    <div class="flex flex-wrap gap-3">
+                        @for (var hi = 0; hi < Model.Hosts.Count; hi++)
                         {
-                            <div class="url-row flex gap-2 items-start">
-                                <div class="flex-1">
-                                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[@i].Url" value="@Model.App.Urls[i].Url" placeholder="https://example.com" />
-                                </div>
-                                <div class="w-36">
-                                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[@i].DisplayName" value="@Model.App.Urls[i].DisplayName" placeholder="显示名称" />
-                                </div>
-                                <button type="button" class="btn-remove-url p-2 text-gray-400 hover:text-red-500 transition-colors" title="删除">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            @if (ModelState["App.Urls[" + i + "].Url"]?.Errors.Count > 0)
-                            {
-                                <span class="text-xs text-red-500">@ModelState["App.Urls[" + i + "].Url"]?.Errors[0].ErrorMessage</span>
-                            }
+                            var h = Model.Hosts[hi];
+                            var checkedAttr = Model.SelectedHostIds.Contains(h.Id) ? "checked" : null;
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-2">
+                                <input type="checkbox" name="SelectedHostIds" value="@h.Id" checked="@checkedAttr" />
+                                <span>@h.Name</span>
+                                <span class="text-xs text-gray-400">@h.Address</span>
+                            </label>
+                        }
+                        @if (Model.Hosts.Count == 0)
+                        {
+                            <span class="text-xs text-gray-400">尚未配置 Host，入口可直接使用 UrlOverride 完整地址</span>
                         }
                     </div>
-                    <span class="text-xs text-red-500" asp-validation-for="App.Urls"></span>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">模块与入口 *</label>
+                        <button type="button" id="btnAddModule" class="text-xs text-blue-600 hover:text-blue-800">+ 添加模块</button>
+                    </div>
+                    <div id="moduleList" class="space-y-4">
+                        @for (var mi = 0; mi < Model.App.Modules.Count; mi++)
+                        {
+                            var mod = Model.App.Modules[mi];
+                            <div class="module-block border border-gray-200 rounded-lg p-4">
+                                <div class="flex gap-2 items-start mb-3">
+                                    <input class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" name="App.Modules[@mi].Name" value="@mod.Name" placeholder="模块名称（如：前台 / API）" />
+                                    <input class="rounded-lg border border-gray-300 px-3 py-2 text-sm w-28" name="App.Modules[@mi].Order" value="@mod.Order" type="number" placeholder="排序" />
+                                    <label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
+                                        <input type="checkbox" name="App.Modules[@mi].IsEnabled" value="true" checked="@mod.IsEnabled" />
+                                        启用
+                                    </label>
+                                    <button type="button" class="btn-remove-module p-2 text-gray-400 hover:text-red-500" title="删除模块">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="App.Modules[@mi].IsEnabled" value="false" />
+                                <div class="endpoint-list space-y-2 ml-1">
+                                    @for (var ei = 0; ei < mod.Endpoints.Count; ei++)
+                                    {
+                                        var ep = mod.Endpoints[ei];
+                                        <div class="endpoint-row grid grid-cols-12 gap-2 items-center">
+                                            <input class="col-span-3 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].DisplayName" value="@ep.DisplayName" placeholder="显示名" />
+                                            <select class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].Kind">
+                                                <option value="Http" selected="@(ep.Kind == EndpointKind.Http)">Http</option>
+                                                <option value="Tcp" selected="@(ep.Kind == EndpointKind.Tcp)">Tcp</option>
+                                                <option value="Udp" selected="@(ep.Kind == EndpointKind.Udp)">Udp</option>
+                                            </select>
+                                            <input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].Port" value="@ep.Port" type="number" placeholder="端口" />
+                                            <input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].Path" value="@ep.Path" placeholder="路径 /admin" />
+                                            <input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[@mi].Endpoints[@ei].UrlOverride" value="@ep.UrlOverride" placeholder="完整 URL 可选" />
+                                            <button type="button" class="btn-remove-endpoint col-span-1 text-gray-400 hover:text-red-500 justify-self-end">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                                <button type="button" class="btn-add-endpoint mt-2 text-xs text-blue-600 hover:text-blue-800">+ 添加入口</button>
+                            </div>
+                        }
+                    </div>
+                    <span class="text-xs text-red-500" asp-validation-for="App.Modules"></span>
                 </div>
 
                 <div class="flex items-center gap-3 pt-2">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">保存</button>
-                    <a class="text-sm text-gray-600 hover:text-gray-900 transition-colors" asp-page="Index">取消</a>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium">保存</button>
+                    <a class="text-sm text-gray-600 hover:text-gray-900" asp-page="Index">取消</a>
                 </div>
             </div>
         </form>
@@ -76,55 +116,86 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var index = @Model.App.Urls.Count;
+        (function () {
+            function reindex() {
+                document.querySelectorAll('.module-block').forEach(function (mod, mi) {
+                    mod.querySelectorAll('input,select').forEach(function (el) {
+                        if (!el.name) return;
+                        el.name = el.name.replace(/App\.Modules\[\d+\]/, 'App.Modules[' + mi + ']');
+                    });
+                    mod.querySelectorAll('.endpoint-row').forEach(function (row, ei) {
+                        row.querySelectorAll('input,select').forEach(function (el) {
+                            if (!el.name) return;
+                            el.name = el.name.replace(/Endpoints\[\d+\]/, 'Endpoints[' + ei + ']');
+                        });
+                    });
+                });
+            }
 
-            document.getElementById('btnAddUrl').addEventListener('click', function () {
-                var list = document.getElementById('urlList');
+            document.getElementById('btnAddModule').addEventListener('click', function () {
+                var list = document.getElementById('moduleList');
+                var mi = list.querySelectorAll('.module-block').length;
                 var div = document.createElement('div');
-                div.className = 'url-row flex gap-2 items-start';
+                div.className = 'module-block border border-gray-200 rounded-lg p-4';
                 div.innerHTML = [
-                    '<div class="flex-1">',
-                    '<input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[' + index + '].Url" placeholder="https://example.com" />',
+                    '<div class="flex gap-2 items-start mb-3">',
+                    '<input class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" name="App.Modules[' + mi + '].Name" placeholder="模块名称" />',
+                    '<input class="rounded-lg border border-gray-300 px-3 py-2 text-sm w-28" name="App.Modules[' + mi + '].Order" type="number" placeholder="排序" />',
+                    '<label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap"><input type="checkbox" name="App.Modules[' + mi + '].IsEnabled" value="true" checked /> 启用</label>',
+                    '<input type="hidden" name="App.Modules[' + mi + '].IsEnabled" value="false" />',
+                    '<button type="button" class="btn-remove-module p-2 text-gray-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>',
                     '</div>',
-                    '<div class="w-36">',
-                    '<input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" name="App.Urls[' + index + '].DisplayName" placeholder="显示名称" />',
-                    '</div>',
-                    '<button type="button" class="btn-remove-url p-2 text-gray-400 hover:text-red-500 transition-colors" title="删除">',
-                    '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">',
-                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />',
-                    '</svg>',
-                    '</button>'
+                    '<div class="endpoint-list space-y-2 ml-1"></div>',
+                    '<button type="button" class="btn-add-endpoint mt-2 text-xs text-blue-600 hover:text-blue-800">+ 添加入口</button>'
                 ].join('');
                 list.appendChild(div);
-                index++;
-                attachRemoveHandlers();
+                div.querySelector('.btn-add-endpoint').click();
+                bind();
+                reindex();
             });
 
-            function attachRemoveHandlers() {
-                document.querySelectorAll('.btn-remove-url').forEach(function (btn) {
-                    btn.removeEventListener('click', removeHandler);
-                    btn.addEventListener('click', removeHandler);
+            function bind() {
+                document.querySelectorAll('.btn-remove-module').forEach(function (btn) {
+                    btn.onclick = function () {
+                        if (document.querySelectorAll('.module-block').length > 1) {
+                            btn.closest('.module-block').remove();
+                            reindex();
+                        }
+                    };
+                });
+                document.querySelectorAll('.btn-add-endpoint').forEach(function (btn) {
+                    btn.onclick = function () {
+                        var block = btn.closest('.module-block');
+                        var epList = block.querySelector('.endpoint-list');
+                        var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
+                        var ei = epList.querySelectorAll('.endpoint-row').length;
+                        var row = document.createElement('div');
+                        row.className = 'endpoint-row grid grid-cols-12 gap-2 items-center';
+                        row.innerHTML = [
+                            '<input class="col-span-3 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].DisplayName" placeholder="显示名" />',
+                            '<select class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Kind"><option value="Http">Http</option><option value="Tcp">Tcp</option><option value="Udp">Udp</option></select>',
+                            '<input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Port" type="number" placeholder="端口" />',
+                            '<input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].Path" placeholder="路径 /admin" />',
+                            '<input class="col-span-2 rounded border border-gray-300 px-2 py-1.5 text-sm" name="App.Modules[' + mi + '].Endpoints[' + ei + '].UrlOverride" placeholder="完整 URL 可选" />',
+                            '<button type="button" class="btn-remove-endpoint col-span-1 text-gray-400 hover:text-red-500 justify-self-end"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>'
+                        ].join('');
+                        epList.appendChild(row);
+                        bind();
+                        reindex();
+                    };
+                });
+                document.querySelectorAll('.btn-remove-endpoint').forEach(function (btn) {
+                    btn.onclick = function () {
+                        var rows = btn.closest('.endpoint-list').querySelectorAll('.endpoint-row');
+                        if (rows.length > 1) {
+                            btn.closest('.endpoint-row').remove();
+                            reindex();
+                        }
+                    };
                 });
             }
 
-            function removeHandler(e) {
-                var row = this.closest('.url-row');
-                if (document.querySelectorAll('.url-row').length > 1) {
-                    row.remove();
-                    reindexUrls();
-                }
-            }
-
-            function reindexUrls() {
-                document.querySelectorAll('.url-row').forEach(function (row, i) {
-                    var inputs = row.querySelectorAll('input');
-                    inputs[0].name = 'App.Urls[' + i + '].Url';
-                    inputs[1].name = 'App.Urls[' + i + '].DisplayName';
-                });
-            }
-
-            attachRemoveHandlers();
-        });
+            bind();
+        })();
     </script>
 }
