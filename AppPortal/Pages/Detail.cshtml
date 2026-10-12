@@ -38,7 +38,7 @@
         <div class="empty-state">
             <div class="empty-icon"><svg class="icon icon-xl"><use href="#i-link"></use></svg></div>
             <p class="empty-title">暂无可用入口</p>
-            <p class="empty-desc">该应用还没有配置模块端口</p>
+            <p class="empty-desc">该应用还没有配置模块地址</p>
         </div>
     }
     else
@@ -46,49 +46,50 @@
         <div class="space-y-3">
             @foreach (var mv in Model.ModuleViews)
             {
-                <div class="module-panel @(mv.AllUnreachable ? "endpoint-row-muted" : "")">
+                <div class="module-panel">
                     <div class="module-summary !cursor-default">
                         <div class="min-w-0">
                             <div class="section-title truncate">@mv.Module.Name</div>
-                            <div class="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <span class="badge-muted">@(mv.Host?.Name ?? "未指定 Host")</span>
-                                <span class="mono">@mv.SchemeText</span>
-                                <span class="mono">@mv.PathText</span>
-                                @if (!string.IsNullOrEmpty(mv.Module.Description))
+                            @if (!string.IsNullOrEmpty(mv.Module.Description))
+                            {
+                                <div class="text-xs text-gray-500 mt-0.5 truncate">@mv.Module.Description</div>
+                            }
+                        </div>
+                        <span class="badge-info shrink-0">@mv.Addresses.Count 个地址</span>
+                    </div>
+                    <div class="divide-y divide-gray-50">
+                        @foreach (var av in mv.Addresses)
+                        {
+                            <div class="px-5 py-3 flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    @if (!string.IsNullOrEmpty(av.Url))
+                                    {
+                                        <a href="@av.Url"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           class="text-sm font-medium text-blue-600 hover:text-blue-800 truncate block"
+                                           title="@av.Url">
+                                            @av.Url
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-sm text-gray-400">地址不完整</span>
+                                    }
+                                    <div class="text-xs text-gray-400 mono mt-0.5">
+                                        @av.Address.Scheme · @av.Address.Address
+                                        @(av.Address.Port is { } p ? $":{p}" : "")
+                                        @(string.IsNullOrEmpty(av.Address.Path) ? "" : av.Address.Path)
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(av.Url))
                                 {
-                                    <span>@mv.Module.Description</span>
+                                    <a href="@av.Url" target="_blank" rel="noopener noreferrer"
+                                       class="btn-secondary btn-sm shrink-0" title="@av.Url">
+                                        <svg class="icon icon-sm"><use href="#i-external"></use></svg>打开
+                                    </a>
                                 }
                             </div>
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            @if (mv.AllUnreachable)
-                            {
-                                <span class="badge-warn">当前网络不可达</span>
-                            }
-                            else
-                            {
-                                <span class="badge-info">@mv.Ports.Count 个端口</span>
-                            }
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2 px-5 pb-4 pt-1">
-                        @foreach (var pv in mv.Ports)
-                        {
-                            @if (pv.Resolved.IsReachable && pv.Resolved.Url is not null)
-                            {
-                                <a href="@pv.Resolved.Url"
-                                   target="_blank"
-                                   rel="noopener noreferrer"
-                                   class="btn-primary btn-sm"
-                                   title="@pv.Resolved.Url">
-                                    <svg class="icon icon-sm"><use href="#i-external"></use></svg>
-                                    @pv.Label
-                                </a>
-                            }
-                            else
-                            {
-                                <span class="btn-secondary btn-sm opacity-60">@pv.Label</span>
-                            }
                         }
                     </div>
                 </div>

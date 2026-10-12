@@ -9,28 +9,19 @@ namespace AppPortal.Pages;
 public class DetailModel : PageModel
 {
     private readonly IAppService _appService;
-    private readonly IHostService _hostService;
 
-    public DetailModel(IAppService appService, IHostService hostService)
+    public DetailModel(IAppService appService)
     {
         _appService = appService;
-        _hostService = hostService;
     }
 
     public AppEntry App { get; set; } = new();
-    public List<AccessHost> Hosts { get; set; } = new();
     public List<ModuleView> ModuleViews { get; set; } = new();
     public string? SourceLabel { get; set; }
 
-    public sealed record PortView(ResolvedPort Resolved, string Label);
+    public sealed record AddressView(ModuleAddress Address, string Url);
 
-    public sealed record ModuleView(
-        AppModule Module,
-        AccessHost? Host,
-        string SchemeText,
-        string PathText,
-        List<PortView> Ports,
-        bool AllUnreachable);
+    public sealed record ModuleView(AppModule Module, List<AddressView> Addresses);
 
     public async Task<IActionResult> OnGetAsync(string id)
     {
@@ -46,50 +37,22 @@ public class DetailModel : PageModel
         }
 
         App = app;
-        Hosts = await _hostService.GetAllAsync();
-        BuildModuleViews();
-        SourceLabel = app.SourceId is not null ? $"Source:{app.SourceId}" : "手工录入";
-        return Page();
-    }
-
-    private void BuildModuleViews()
-    {
-        var hostMap = Hosts.ToDictionary(h => h.Id, h => h);
-
-        ModuleViews = App.Modules
+        ModuleViews = app.Modules
             .Where(m => m.IsEnabled)
             .OrderBy(m => m.Order)
             .ThenBy(m => m.Name)
-            .Select(m =>
-            {
-                AccessHost? host = null;
-                if (m.HostId is { } hid)
-                {
-                    hostMap.TryGetValue(hid, out host);
-                }
-                else if (Hosts.Count > 0)
-                {
-                    host = Hosts.FirstOrDefault(h => h.IsDefault) ?? Hosts[0];
-                }
-
-                var ports = m.Ports
-                    .Select(p =>
+            .Select(m => new ModuleView(
+                m,
+                m.Addresses
+                    .Select(a =>
                     {
-                        var resolved = UrlResolver.Resolve(p, m, host);
-                        return new PortView(resolved, p.Port > 0 ? $":{p.Port}" : "入口");
+                        var r = UrlResolver.Resolve(a);
+                        return new AddressView(a, r.Url);
                     })
-                    .ToList();
-
-                var allUnreachable = ports.Count > 0 && ports.All(p => !p.Resolved.IsReachable);
-                var pathText = string.IsNullOrWhiteSpace(m.Path) ? "/" : m.Path.Trim();
-                return new ModuleView(
-                    m,
-                    host,
-                    UrlResolver.NormalizeScheme(m.Scheme),
-                    pathText,
-                    ports,
-                    allUnreachable);
-            })
+                    .ToList()))
             .ToList();
+
+        SourceLabel = app.SourceId is not null ? $"Source:{app.SourceId}" : "手工录入";
+        return Page();
     }
 }

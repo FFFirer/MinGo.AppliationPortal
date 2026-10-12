@@ -1,4 +1,3 @@
-using AppPortal.Models;
 using LiteDB;
 
 namespace AppPortal.Models;
@@ -15,7 +14,7 @@ public class AppEditModel
         new AppModule
         {
             Name = "访问入口",
-            Ports = new List<AppPort> { new() }
+            Addresses = new List<ModuleAddress> { new() }
         }
     };
 
@@ -39,19 +38,18 @@ public class AppEditModel
                     Order = m.Order == 0 ? i : m.Order,
                     SourceService = m.SourceService,
                     HostId = m.HostId,
-                    Scheme = string.Equals(m.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http",
-                    Path = string.IsNullOrWhiteSpace(m.Path) ? null : m.Path.Trim(),
-                    Ports = (m.Ports ?? new List<AppPort>())
-                        .Where(p => p.Port > 0 || !string.IsNullOrWhiteSpace(p.UrlOverride))
-                        .Select(p => new AppPort
+                    Addresses = (m.Addresses ?? new List<ModuleAddress>())
+                        .Where(a => !string.IsNullOrWhiteSpace(a.Address))
+                        .Select(a => new ModuleAddress
                         {
-                            Port = p.Port > 0 ? p.Port : 80,
-                            ContainerPort = p.ContainerPort,
-                            UrlOverride = string.IsNullOrWhiteSpace(p.UrlOverride) ? null : p.UrlOverride.Trim()
+                            Scheme = string.Equals(a.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http",
+                            Address = a.Address.Trim(),
+                            Port = a.Port is > 0 ? a.Port : null,
+                            Path = string.IsNullOrWhiteSpace(a.Path) ? null : a.Path.Trim()
                         })
                         .ToList()
                 })
-                .Where(m => m.Ports.Count > 0)
+                .Where(m => m.Addresses.Count > 0)
                 .ToList()
         };
     }
@@ -74,9 +72,7 @@ public class AppEditModel
                     Order = m.Order,
                     SourceService = m.SourceService,
                     HostId = m.HostId,
-                    Scheme = m.Scheme,
-                    Path = m.Path,
-                    Ports = m.Ports.ToList()
+                    Addresses = m.Addresses.ToList()
                 })
                 .ToList()
         };

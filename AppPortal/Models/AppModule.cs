@@ -10,14 +10,28 @@ public class AppModule
     public int Order { get; set; }
     public string? SourceService { get; set; }
 
-    /// <summary>Host for this module's endpoints.</summary>
+    /// <summary>Optional host group; helps fill address suggestions.</summary>
     public ObjectId? HostId { get; set; }
 
-    /// <summary>http or https — applies to all ports in the module.</summary>
+    /// <summary>One URL row per address.</summary>
+    public List<ModuleAddress> Addresses { get; set; } = new();
+}
+
+/// <summary>
+/// One access address under a module, laid out as a URL:
+/// scheme://address[:port][/path]. Port and path are optional.
+/// </summary>
+public class ModuleAddress
+{
+    /// <summary>http or https</summary>
     public string Scheme { get; set; } = "http";
 
-    /// <summary>Single path for the module, e.g. /admin.</summary>
-    public string? Path { get; set; }
+    /// <summary>Host IP or name.</summary>
+    public string Address { get; set; } = string.Empty;
 
-    public List<AppPort> Ports { get; set; } = new();
+    /// <summary>Optional port.</summary>
+    public int? Port { get; set; }
+
+    /// <summary>Optional path, e.g. /admin</summary>
+    public string? Path { get; set; }
 }

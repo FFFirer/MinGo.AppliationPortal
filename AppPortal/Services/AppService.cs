@@ -101,12 +101,12 @@ internal static class AppMigration
             Name = "访问入口",
             IsEnabled = true,
             Order = 0,
-            Ports = app.Urls
+            Addresses = app.Urls
                 .Where(u => !string.IsNullOrWhiteSpace(u.Url))
-                .Select((u, idx) => new AppPort
+                .Select(u => new ModuleAddress
                 {
-                    Port = 80 + idx,
-                    UrlOverride = u.Url.Trim()
+                    Scheme = "http",
+                    Address = u.Url.Trim()
                 })
                 .ToList()
         };

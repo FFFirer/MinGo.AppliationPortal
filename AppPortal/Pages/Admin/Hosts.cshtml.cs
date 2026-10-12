@@ -12,7 +12,11 @@ public class HostsModel : PageModel
     public List<AccessHost> Hosts { get; set; } = new();
 
     [BindProperty]
-    public AccessHost NewHost { get; set; } = new();
+    public string NewName { get; set; } = string.Empty;
+
+    /// <summary>One address per line, or comma-separated.</summary>
+    [BindProperty]
+    public string NewAddresses { get; set; } = string.Empty;
 
     public string? Message { get; set; }
 
@@ -29,12 +33,29 @@ public class HostsModel : PageModel
 
     public async Task<IActionResult> OnPostCreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(NewHost.Name) || string.IsNullOrWhiteSpace(NewHost.Address))
+        if (string.IsNullOrWhiteSpace(NewName))
         {
-            return RedirectToPage(new { message = "名称与地址必填" });
+            return RedirectToPage(new { message = "名称必填" });
         }
 
-        await _hostService.CreateAsync(NewHost);
+        var addresses = NewAddresses
+            .Split(new[] { '\n', '\r', ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => s.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (addresses.Count == 0)
+        {
+            return RedirectToPage(new { message = "至少填写一个 IP/地址" });
+        }
+
+        await _hostService.CreateAsync(new AccessHost
+        {
+            Name = NewName.Trim(),
+            Addresses = addresses,
+            IsDefault = false
+        });
         return RedirectToPage();
     }
 

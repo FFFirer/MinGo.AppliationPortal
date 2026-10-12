@@ -6,6 +6,7 @@ public class AppDraftEndpoint
 {
     public string DisplayName { get; set; } = string.Empty;
     public string Scheme { get; set; } = "http";
+    public string Address { get; set; } = string.Empty;
     public int? HostPort { get; set; }
     public int? ContainerPort { get; set; }
     public bool Selected { get; set; } = true;

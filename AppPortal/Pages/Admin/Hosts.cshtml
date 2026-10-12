@@ -6,13 +6,13 @@
 
 <div class="page-shell-narrow">
     <a class="back-link" asp-page="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
+        <svg class="icon"><use href="#i-arrow-left"></use></svg>
         返回管理列表
     </a>
 
     <div class="mb-7">
         <h1 class="page-title">Host 目录</h1>
-        <p class="page-desc">全局可访问主机，应用可引用；详情页按 Host 解析入口地址</p>
+        <p class="page-desc">一个 Host 可包含多个 IP/地址，供模块地址选用</p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Message))
@@ -20,66 +20,77 @@
         <div class="alert-warn">@Model.Message</div>
     }
 
-    <div class="table-panel mb-6"><div class="table-scroll">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>名称</th>
-                    <th>地址</th>
-                    <th>默认</th>
-                    <th class="!text-right">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var h in Model.Hosts)
-                {
+    <div class="table-panel mb-6">
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <td class="!font-medium !text-gray-900">@h.Name</td>
-                        <td class="mono !text-gray-600">@h.Address</td>
-                        <td>
-                            @if (h.IsDefault)
-                            {
-                                <span class="badge-info">默认</span>
-                            }
-                        </td>
-                        <td>
-                            <div class="toolbar justify-end">
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
-                                    <button type="submit" class="btn-danger btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>删除</button>
-                                </form>
-                            </div>
-                        </td>
+                        <th>名称</th>
+                        <th>地址</th>
+                        <th>默认</th>
+                        <th class="!text-right">操作</th>
                     </tr>
-                }
-                @if (Model.Hosts.Count == 0)
-                {
-                    <tr>
-                        <td colspan="4" class="!py-12 text-center text-gray-400">暂无 Host，请在下方添加</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var h in Model.Hosts)
+                    {
+                        <tr>
+                            <td class="!font-medium !text-gray-900">@h.Name</td>
+                            <td>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach (var addr in h.Addresses)
+                                    {
+                                        <span class="badge-muted mono">@addr</span>
+                                    }
+                                    @if (h.Addresses.Count == 0)
+                                    {
+                                        <span class="text-gray-400 text-xs">无地址</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (h.IsDefault)
+                                {
+                                    <span class="badge-info">默认</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="flex justify-end">
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
+                                        <button type="submit" class="btn-danger btn-sm">
+                                            <svg class="icon icon-sm"><use href="#i-trash"></use></svg>删除
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Hosts.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="!py-12 text-center text-gray-400">暂无 Host，请在下方添加</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 
     <div class="card card-pad">
         <h2 class="section-title mb-4">新增 Host</h2>
-        <form method="post" asp-page-handler="Create" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form method="post" asp-page-handler="Create" class="space-y-4">
             <div>
                 <label class="field-label">名称 *</label>
-                <input asp-for="NewHost.Name" class="input" placeholder="办公网" />
+                <input asp-for="NewName" class="input" placeholder="办公网 / 公网 / 运维网" />
             </div>
             <div>
-                <label class="field-label">地址 *</label>
-                <input asp-for="NewHost.Address" class="input" placeholder="10.0.0.5 或 portal.example.com" />
+                <label class="field-label">IP / 地址 *</label>
+                <textarea asp-for="NewAddresses" class="textarea" rows="3" placeholder="10.0.0.5&#10;10.0.0.6&#10;portal.example.com"></textarea>
+                <p class="field-hint">一行一个地址，也可用逗号分隔；同一 Host 下可挂多个 IP</p>
             </div>
-            <div class="flex items-end gap-4">
-                <label class="check-label pb-2.5">
-                    <input asp-for="NewHost.IsDefault" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500/30" />
-                    设为全局默认
-                </label>
-                <button type="submit" class="btn-primary ml-auto"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>添加</button>
-            </div>
+            <button type="submit" class="btn-primary">
+                <svg class="icon"><use href="#i-plus"></use></svg>添加
+            </button>
         </form>
     </div>
 </div>

@@ -2,57 +2,33 @@ using AppPortal.Models;
 
 namespace AppPortal.Services;
 
-public sealed record ResolvedPort(
-    AppPort Port,
-    string? Url,
-    string DisplayText,
-    bool IsReachable);
+public sealed record ResolvedAddress(ModuleAddress Address, string Url);
 
 public static class UrlResolver
 {
-    public static ResolvedPort Resolve(AppPort port, AppModule module, AccessHost? host)
+    public static ResolvedAddress Resolve(ModuleAddress address)
     {
-        if (!string.IsNullOrWhiteSpace(port.UrlOverride))
+        var scheme = NormalizeScheme(address.Scheme);
+        var host = address.Address.Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(host))
         {
-            var overrideUrl = port.UrlOverride.Trim();
-            return new ResolvedPort(port, overrideUrl, overrideUrl, true);
+            return new ResolvedAddress(address, "");
         }
 
-        if (host is null || string.IsNullOrWhiteSpace(host.Address))
+        // Allow pasting a full URL into Address
+        if (host.Contains("://", StringComparison.Ordinal))
         {
-            return new ResolvedPort(port, null, "当前网络不可达", false);
+            return new ResolvedAddress(address, host);
         }
 
-        if (module.HostId is { } pinned && host.Id != pinned)
-        {
-            return new ResolvedPort(port, null, "当前网络不可达", false);
-        }
-
-        var scheme = NormalizeScheme(module.Scheme);
-        var address = host.Address.Trim();
-        var path = NormalizePath(module.Path);
-        var portSegment = BuildPortSegment(scheme, port.Port);
-        var url = $"{scheme}://{address}{portSegment}{path}";
-        return new ResolvedPort(port, url, url, true);
+        var portSeg = address.Port is { } p && p > 0 ? $":{p}" : "";
+        var path = NormalizePath(address.Path);
+        var url = $"{scheme}://{host}{portSeg}{path}";
+        return new ResolvedAddress(address, url);
     }
 
     public static string NormalizeScheme(string? scheme)
         => string.Equals(scheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
-
-    private static string BuildPortSegment(string scheme, int port)
-    {
-        if (scheme == "https" && port == 443)
-        {
-            return "";
-        }
-
-        if (scheme == "http" && port == 80)
-        {
-            return "";
-        }
-
-        return $":{port}";
-    }
 
     private static string NormalizePath(string? path)
     {

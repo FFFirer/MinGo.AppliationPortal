@@ -59,6 +59,7 @@ public class PortainerAppSource : IAppSource
                         ? $"{group.Key} · {pub}→{mapping.PrivatePort}"
                         : $"{group.Key} · {mapping.PrivatePort}",
                     Scheme = "http",
+                    Address = draft.HostHints.FirstOrDefault() ?? "",
                     HostPort = mapping.PublicPort,
                     ContainerPort = mapping.PrivatePort,
                     Selected = mapping.PublicPort is not null

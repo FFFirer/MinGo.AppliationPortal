@@ -41,7 +41,7 @@
                             <svg class="icon icon-sm"><use href="#i-plus"></use></svg>添加模块
                         </button>
                     </div>
-                    <p class="field-hint mb-3">每个模块对应一组入口：选定 Host、协议和路径，下方可挂多个端口。</p>
+                    <p class="field-hint mb-3">应用下可挂多个模块；每个模块下多行地址，按 URL 拆成 协议 · 地址 · 端口(可选) · 路径(可选)。</p>
 
                     <div id="moduleList" class="space-y-4">
                         @for (var mi = 0; mi < Model.App.Modules.Count; mi++)
@@ -61,43 +61,42 @@
                                     </button>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                                    <div>
-                                        <label class="field-label !text-xs">Host</label>
-                                        <select class="select" name="App.Modules[@mi].HostId">
-                                            <option value="">— 未选择 —</option>
-                                            @foreach (var h in Model.Hosts)
-                                            {
-                                                <option value="@h.Id" selected="@(mod.HostId == h.Id)">@h.Name · @h.Address</option>
-                                            }
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="field-label !text-xs">协议</label>
-                                        <select class="select" name="App.Modules[@mi].Scheme">
-                                            <option value="http" selected="@(mod.Scheme != "https")">http</option>
-                                            <option value="https" selected="@(mod.Scheme == "https")">https</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="field-label !text-xs">路径</label>
-                                        <input class="input" name="App.Modules[@mi].Path" value="@mod.Path" placeholder="/" />
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="field-label !text-xs">关联 Host（可选，用于地址建议）</label>
+                                    <select class="select" name="App.Modules[@mi].HostId" data-host-select>
+                                        <option value="">— 不关联 —</option>
+                                        @foreach (var h in Model.Hosts)
+                                        {
+                                            <option value="@h.Id"
+                                                    data-addresses="@string.Join("|", h.Addresses)"
+                                                    selected="@(mod.HostId == h.Id)">
+                                                @h.Name (@h.Addresses.Count 个地址)
+                                            </option>
+                                        }
+                                    </select>
                                 </div>
 
                                 <div>
                                     <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-gray-500">端口</span>
-                                        <button type="button" class="btn-add-port text-xs text-blue-600 hover:text-blue-800">+ 添加端口</button>
+                                        <span class="text-xs font-medium text-gray-500">地址（一行一个）</span>
+                                        <button type="button" class="btn-add-addr text-xs text-blue-600 hover:text-blue-800">+ 添加地址</button>
                                     </div>
-                                    <div class="port-list flex flex-wrap gap-2">
-                                        @for (var pi = 0; pi < mod.Ports.Count; pi++)
+                                    <div class="addr-list space-y-2">
+                                        @for (var ai = 0; ai < mod.Addresses.Count; ai++)
                                         {
-                                            var port = mod.Ports[pi];
-                                            <div class="port-row inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2 py-1.5">
-                                                <input class="input !border-0 !shadow-none !px-2 !py-1 !w-20 !text-sm" name="App.Modules[@mi].Ports[@pi].Port" value="@port.Port" type="number" min="1" placeholder="端口" />
-                                                <input type="hidden" name="App.Modules[@mi].Ports[@pi].ContainerPort" value="@port.ContainerPort" />
-                                                <button type="button" class="btn-remove-port text-gray-300 hover:text-red-500 p-1">
+                                            var addr = mod.Addresses[ai];
+                                            <div class="addr-row flex flex-wrap items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2.5 py-2">
+                                                <select class="select !w-auto !py-1.5 !px-2 !text-sm" name="App.Modules[@mi].Addresses[@ai].Scheme">
+                                                    <option value="http" selected="@(addr.Scheme != "https")">http</option>
+                                                    <option value="https" selected="@(addr.Scheme == "https")">https</option>
+                                                </select>
+                                                <span class="text-gray-400 text-sm">://</span>
+                                                <input class="input !w-36 !py-1.5 !text-sm" name="App.Modules[@mi].Addresses[@ai].Address" value="@addr.Address" placeholder="10.0.0.5" />
+                                                <span class="text-gray-400 text-sm">:</span>
+                                                <input class="input !w-20 !py-1.5 !text-sm" name="App.Modules[@mi].Addresses[@ai].Port" value="@addr.Port" type="number" min="1" placeholder="端口" />
+                                                <span class="text-gray-400 text-sm">/</span>
+                                                <input class="input !w-28 !py-1.5 !text-sm" name="App.Modules[@mi].Addresses[@ai].Path" value="@addr.Path" placeholder="路径(可选)" />
+                                                <button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 ml-auto">
                                                     <svg class="icon icon-sm"><use href="#i-x"></use></svg>
                                                 </button>
                                             </div>
@@ -128,13 +127,28 @@
                         if (!el.name) return;
                         el.name = el.name.replace(/App\.Modules\[\d+\]/, 'App.Modules[' + mi + ']');
                     });
-                    mod.querySelectorAll('.port-row').forEach(function (row, pi) {
-                        row.querySelectorAll('input').forEach(function (el) {
+                    mod.querySelectorAll('.addr-row').forEach(function (row, ai) {
+                        row.querySelectorAll('input,select').forEach(function (el) {
                             if (!el.name) return;
-                            el.name = el.name.replace(/Ports\[\d+\]/, 'Ports[' + pi + ']');
+                            el.name = el.name.replace(/Addresses\[\d+\]/, 'Addresses[' + ai + ']');
                         });
                     });
                 });
+            }
+
+            function addrRowHtml(mi, ai) {
+                return [
+                    '<select class="select !w-auto !py-1.5 !px-2 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Scheme">',
+                    '<option value="http">http</option><option value="https">https</option></select>',
+                    '<span class="text-gray-400 text-sm">://</span>',
+                    '<input class="input !w-36 !py-1.5 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Address" placeholder="10.0.0.5" />',
+                    '<span class="text-gray-400 text-sm">:</span>',
+                    '<input class="input !w-20 !py-1.5 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Port" type="number" min="1" placeholder="端口" />',
+                    '<span class="text-gray-400 text-sm">/</span>',
+                    '<input class="input !w-28 !py-1.5 !text-sm" name="App.Modules[' + mi + '].Addresses[' + ai + '].Path" placeholder="路径(可选)" />',
+                    '<button type="button" class="btn-remove-addr text-gray-300 hover:text-red-500 p-1 ml-auto">',
+                    '<svg class="icon icon-sm"><use href="#i-x"></use></svg></button>'
+                ].join('');
             }
 
             function bind() {
@@ -147,33 +161,46 @@
                     };
                 });
 
-                document.querySelectorAll('.btn-add-port').forEach(function (btn) {
+                document.querySelectorAll('.btn-add-addr').forEach(function (btn) {
                     btn.onclick = function () {
                         var block = btn.closest('.module-block');
                         var mi = Array.prototype.indexOf.call(document.querySelectorAll('.module-block'), block);
-                        var pi = block.querySelectorAll('.port-row').length;
+                        var ai = block.querySelectorAll('.addr-row').length;
                         var row = document.createElement('div');
-                        row.className = 'port-row inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2 py-1.5';
-                        row.innerHTML = [
-                            '<input class="input !border-0 !shadow-none !px-2 !py-1 !w-20 !text-sm" name="App.Modules[' + mi + '].Ports[' + pi + '].Port" type="number" min="1" placeholder="端口" />',
-                            '<input type="hidden" name="App.Modules[' + mi + '].Ports[' + pi + '].ContainerPort" value="" />',
-                            '<button type="button" class="btn-remove-port text-gray-300 hover:text-red-500 p-1">',
-                            '<svg class="icon icon-sm"><use href="#i-x"></use></svg>',
-                            '</button>'
-                        ].join('');
-                        block.querySelector('.port-list').appendChild(row);
+                        row.className = 'addr-row flex flex-wrap items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2.5 py-2';
+                        row.innerHTML = addrRowHtml(mi, ai);
+                        block.querySelector('.addr-list').appendChild(row);
                         bind();
                         reindex();
                     };
                 });
 
-                document.querySelectorAll('.btn-remove-port').forEach(function (btn) {
+                document.querySelectorAll('.btn-remove-addr').forEach(function (btn) {
                     btn.onclick = function () {
-                        var rows = btn.closest('.port-list').querySelectorAll('.port-row');
+                        var rows = btn.closest('.addr-list').querySelectorAll('.addr-row');
                         if (rows.length > 1) {
-                            btn.closest('.port-row').remove();
+                            btn.closest('.addr-row').remove();
                             reindex();
                         }
+                    };
+                });
+
+                document.querySelectorAll('[data-host-select]').forEach(function (sel) {
+                    sel.onchange = function () {
+                        var addrs = (sel.options[sel.selectedIndex].getAttribute('data-addresses') || '')
+                            .split('|').filter(Boolean);
+                        if (!addrs.length) return;
+                        var block = sel.closest('.module-block');
+                        var list = block.querySelector('.addr-list');
+                        var existing = Array.prototype.map.call(list.querySelectorAll('.addr-row input[name$=".Address"]'), function (i) { return i.value; });
+                        addrs.forEach(function (a) {
+                            if (existing.indexOf(a) >= 0) return;
+                            var btn = block.querySelector('.btn-add-addr');
+                            btn.click();
+                            var rows = list.querySelectorAll('.addr-row');
+                            var last = rows[rows.length - 1];
+                            last.querySelector('input[name$=".Address"]').value = a;
+                        });
                     };
                 });
             }
@@ -181,9 +208,13 @@
             document.getElementById('btnAddModule').addEventListener('click', function () {
                 var list = document.getElementById('moduleList');
                 var mi = list.querySelectorAll('.module-block').length;
-                var hosts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Hosts.Select(h => new { id = h.Id.ToString(), text = $"{h.Name} · {h.Address}" })));
+                var hosts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Hosts.Select(h => new {
+                    id = h.Id.ToString(),
+                    text = $"{h.Name} ({h.Addresses.Count} 个地址)",
+                    addresses = string.Join("|", h.Addresses)
+                })));
                 var hostOpts = hosts.map(function (h) {
-                    return '<option value="' + h.id + '">' + h.text + '</option>';
+                    return '<option value="' + h.id + '" data-addresses="' + h.addresses + '">' + h.text + '</option>';
                 }).join('');
                 var div = document.createElement('div');
                 div.className = 'module-block rounded-2xl border border-gray-200/80 bg-gray-50/50 p-4';
@@ -195,19 +226,16 @@
                     '<input type="hidden" name="App.Modules[' + mi + '].IsEnabled" value="false" />',
                     '<button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 hover:text-red-500 btn-remove-module"><svg class="icon"><use href="#i-trash"></use></svg></button>',
                     '</div>',
-                    '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">',
-                    '<div><label class="field-label !text-xs">Host</label><select class="select" name="App.Modules[' + mi + '].HostId"><option value="">— 未选择 —</option>' + hostOpts + '</select></div>',
-                    '<div><label class="field-label !text-xs">协议</label><select class="select" name="App.Modules[' + mi + '].Scheme"><option value="http">http</option><option value="https">https</option></select></div>',
-                    '<div><label class="field-label !text-xs">路径</label><input class="input" name="App.Modules[' + mi + '].Path" placeholder="/" /></div>',
-                    '</div>',
+                    '<div class="mb-3"><label class="field-label !text-xs">关联 Host（可选）</label>',
+                    '<select class="select" name="App.Modules[' + mi + '].HostId" data-host-select><option value="">— 不关联 —</option>' + hostOpts + '</select></div>',
                     '<div>',
-                    '<div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-gray-500">端口</span>',
-                    '<button type="button" class="btn-add-port text-xs text-blue-600 hover:text-blue-800">+ 添加端口</button></div>',
-                    '<div class="port-list flex flex-wrap gap-2"></div>',
+                    '<div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-gray-500">地址（一行一个）</span>',
+                    '<button type="button" class="btn-add-addr text-xs text-blue-600 hover:text-blue-800">+ 添加地址</button></div>',
+                    '<div class="addr-list space-y-2"></div>',
                     '</div>'
                 ].join('');
                 list.appendChild(div);
-                div.querySelector('.btn-add-port').click();
+                div.querySelector('.btn-add-addr').click();
                 bind();
                 reindex();
             });
