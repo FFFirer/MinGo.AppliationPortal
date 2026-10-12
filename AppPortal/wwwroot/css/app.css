@@ -1994,6 +1994,16 @@
     line-height: var(--tw-leading, var(--text-sm--line-height));
   }
 }
+@layer components {
+  .badge-success, .badge-muted, .badge-warn, .badge-info {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .host-chip-active, .host-chip-idle {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
 @property --tw-space-y-reverse {
   syntax: "*";
   inherits: false;
