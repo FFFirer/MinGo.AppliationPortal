@@ -6,7 +6,7 @@
 
 <div class="page-shell-narrow">
     <a class="back-link" asp-page="Index">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
         返回管理列表
     </a>
 
@@ -54,12 +54,12 @@
                         <td class="!text-xs !text-gray-400">@(s.LastSyncAt?.ToString("u") ?? "—")</td>
                         <td>
                             <div class="toolbar justify-end">
-                                <a class="btn-primary btn-sm" asp-page="Import" asp-route-sourceId="@s.Id">导入</a>
+                                <a class="btn-primary btn-sm" asp-page="Import" asp-route-sourceId="@s.Id"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"></use></svg>导入</a>
                                 <form method="post" asp-page-handler="Test" asp-route-id="@s.Id" class="inline">
-                                    <button type="submit" class="btn-secondary btn-sm">测试连接</button>
+                                    <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>测试连接</button>
                                 </form>
                                 <form method="post" asp-page-handler="Delete" asp-route-id="@s.Id" class="inline">
-                                    <button type="submit" class="btn-danger btn-sm">删除</button>
+                                    <button type="submit" class="btn-danger btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>删除</button>
                                 </form>
                             </div>
                         </td>
@@ -99,7 +99,7 @@
                     <input asp-for="NewApiKey" class="input" placeholder="ptr_xxx" />
                 </div>
             </div>
-            <button type="submit" class="btn-primary">保存并测试连接</button>
+            <button type="submit" class="btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>保存并测试连接</button>
         </form>
     </div>
 </div>

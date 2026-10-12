@@ -8,10 +8,10 @@
     @if (Model.Apps.Count == 0)
     {
         <div class="empty-state max-w-lg mx-auto">
-            <div class="empty-icon">📋</div>
+            <div class="empty-icon"><svg class="icon icon-xl" aria-hidden="true"><use href="#i-package"></use></svg></div>
             <h2 class="empty-title">暂无可用应用</h2>
             <p class="empty-desc mb-6">当前没有已启用的应用，请联系管理员。</p>
-            <a class="btn-primary" asp-page="/Admin/Index">前往管理后台</a>
+            <a class="btn-primary" asp-page="/Admin/Index"><svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg>前往管理后台</a>
         </div>
     }
     else
@@ -44,7 +44,7 @@
 
                     <div class="mt-auto pt-5 flex items-center justify-between text-xs">
                         <span class="text-gray-400">@app.Modules.Count(m => m.IsEnabled) 个模块</span>
-                        <span class="text-blue-600 font-medium group-hover:translate-x-0.5 transition-transform">查看详情 →</span>
+                        <span class="text-blue-600 font-medium group-hover:translate-x-0.5 transition-transform">查看详情 <svg class="icon icon-sm" aria-hidden="true"><use href="#i-external"></use></svg></span>
                     </div>
                 </a>
             }

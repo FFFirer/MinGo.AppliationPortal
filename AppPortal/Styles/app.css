@@ -58,30 +58,32 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5
-           text-sm font-medium text-white bg-blue-600
-           shadow-sm shadow-blue-600/20
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2
+           text-sm font-medium text-white bg-blue-600 whitespace-nowrap
+           shadow-sm shadow-blue-600/20 leading-none
            hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/25
            active:translate-y-px transition-all duration-150
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2
            text-sm font-medium text-gray-700 bg-white border border-gray-200
-           shadow-sm hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+           shadow-sm whitespace-nowrap leading-none
+           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
            active:translate-y-px transition-all duration-150;
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2
            text-sm font-medium text-red-600 bg-white border border-red-200
+           whitespace-nowrap leading-none
            hover:bg-red-50 hover:border-red-300 active:translate-y-px
            transition-all duration-150;
   }
 
   .btn-sm {
-    @apply !px-3 !py-1.5 !text-xs !rounded-lg;
+    @apply !px-2.5 !py-1.5 !text-xs !rounded-lg !leading-none !gap-1.5;
   }
 
   .card {
@@ -396,4 +398,55 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
+}
+
+@layer components {
+
+  /* Unified stroke icon system */
+  .icon {
+    @apply inline-block shrink-0 text-current;
+    width: 1rem;
+    height: 1rem;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .icon-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .icon-lg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .icon-xl {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .btn-primary .icon,
+  .btn-secondary .icon,
+  .btn-danger .icon {
+    @apply opacity-90;
+  }
+
+}
+
+/* Icon sprite container */
+svg.hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  white-space: nowrap;
 }

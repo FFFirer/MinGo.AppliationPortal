@@ -6,7 +6,7 @@
 
 <div class="page-shell-narrow">
     <a class="back-link" asp-page="Index">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
         返回管理列表
     </a>
 
@@ -47,7 +47,7 @@
                         <td>
                             <div class="toolbar justify-end">
                                 <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
-                                    <button type="submit" class="btn-danger btn-sm">删除</button>
+                                    <button type="submit" class="btn-danger btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>删除</button>
                                 </form>
                             </div>
                         </td>
@@ -87,7 +87,7 @@
                     <input asp-for="NewHost.IsDefault" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500/30" />
                     设为全局默认
                 </label>
-                <button type="submit" class="btn-primary ml-auto">添加</button>
+                <button type="submit" class="btn-primary ml-auto"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>添加</button>
             </div>
         </form>
     </div>

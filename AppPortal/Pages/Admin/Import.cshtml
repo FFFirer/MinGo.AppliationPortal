@@ -6,7 +6,7 @@
 
 <div class="page-shell-narrow">
     <a class="back-link" asp-page="Sources">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
         返回数据源
     </a>
 
@@ -103,7 +103,7 @@
                 }
 
                 <div class="flex items-center gap-3 pt-1">
-                    <button type="submit" class="btn-primary">确认导入</button>
+                    <button type="submit" class="btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>确认导入</button>
                     <a class="btn-secondary" asp-page="Import" asp-route-sourceId="@Model.Source?.Id">返回列表</a>
                 </div>
             </div>

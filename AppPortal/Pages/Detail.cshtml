@@ -6,7 +6,7 @@
 
 <div class="page-shell-narrow">
     <a class="back-link" asp-page="/Index">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
         返回应用中心
     </a>
 
@@ -61,7 +61,7 @@
     @if (Model.ModuleViews.Count == 0)
     {
         <div class="empty-state">
-            <div class="empty-icon">🔗</div>
+            <div class="empty-icon"><svg class="icon icon-xl" aria-hidden="true"><use href="#i-link"></use></svg></div>
             <p class="empty-title">暂无可用入口</p>
             <p class="empty-desc">该应用还没有配置模块入口</p>
         </div>
@@ -86,9 +86,7 @@
                                 <span class="badge-warn">@mv.UnreachableCount 项不可达</span>
                             }
                             <span class="badge-muted">@mv.Endpoints.Count 个入口</span>
-                            <svg class="w-4 h-4 text-gray-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <span class="text-gray-300"><svg class="icon" aria-hidden="true"><use href="#i-chevron-down"></use></svg></span>
                         </div>
                     </summary>
                     <div>
@@ -114,9 +112,7 @@
                                            rel="noopener noreferrer"
                                            class="btn-primary btn-sm">
                                             打开
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                            </svg>
+                                            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-external"></use></svg>
                                         </a>
                                     }
                                     else if (ep.Resolved.IsReachable)
