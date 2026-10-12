@@ -4,98 +4,101 @@
     ViewData["Title"] = "数据源管理";
 }
 
-<div class="max-w-3xl mx-auto">
-    <div class="mb-6">
-        <a class="text-sm text-blue-600 hover:text-blue-800" asp-page="Index">&larr; 返回管理列表</a>
-    </div>
+<div class="page-shell-narrow">
+    <a class="back-link" asp-page="Index">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        返回管理列表
+    </a>
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">数据源</h1>
-            <p class="text-sm text-gray-500 mt-1">从 Portainer 等渠道导入应用；后续可扩展其他来源</p>
-        </div>
+    <div class="mb-7">
+        <h1 class="page-title">数据源</h1>
+        <p class="page-desc">从 Portainer 等渠道导入应用；后续可扩展其他来源</p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="bg-blue-50 text-blue-800 rounded-lg p-3 text-sm mb-4">@Model.Message</div>
+        <div class="alert-info">@Model.Message</div>
     }
 
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-        <table class="w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200">
+    <div class="table-panel mb-6">
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <th class="text-left px-4 py-3 font-medium text-gray-600">名称</th>
-                    <th class="text-left px-4 py-3 font-medium text-gray-600">类型</th>
-                    <th class="text-left px-4 py-3 font-medium text-gray-600">状态</th>
-                    <th class="text-left px-4 py-3 font-medium text-gray-600">最近同步</th>
-                    <th class="text-right px-4 py-3 font-medium text-gray-600">操作</th>
+                    <th>名称</th>
+                    <th>类型</th>
+                    <th>状态</th>
+                    <th>最近同步</th>
+                    <th class="!text-right">操作</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
                 @foreach (var s in Model.Sources)
                 {
                     <tr>
-                        <td class="px-4 py-3 font-medium text-gray-900">@s.Name</td>
-                        <td class="px-4 py-3 text-gray-600">@s.Type</td>
-                        <td class="px-4 py-3">
-                            @if (s.LastStatus == "connected" || s.LastStatus == "imported" || s.LastStatus == "updated")
+                        <td class="!font-medium !text-gray-900">@s.Name</td>
+                        <td>@s.Type</td>
+                        <td>
+                            @if (s.LastStatus is "connected" or "imported" or "updated")
                             {
-                                <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">@s.LastStatus</span>
+                                <span class="badge-success">@s.LastStatus</span>
                             }
                             else if (s.LastStatus is not null)
                             {
-                                <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">@s.LastStatus</span>
+                                <span class="badge-warn">@s.LastStatus</span>
                             }
                             else
                             {
-                                <span class="text-xs text-gray-400">未测试</span>
+                                <span class="badge-muted">未测试</span>
                             }
                         </td>
-                        <td class="px-4 py-3 text-gray-500 text-xs">@(s.LastSyncAt?.ToString("u") ?? "—")</td>
-                        <td class="px-4 py-3 text-right space-x-2">
-                            <a class="text-xs px-3 py-1.5 rounded-md border border-blue-200 text-blue-600 hover:bg-blue-50" asp-page="Import" asp-route-sourceId="@s.Id">导入</a>
-                            <form method="post" asp-page-handler="Test" asp-route-id="@s.Id" class="inline">
-                                <button type="submit" class="text-xs px-3 py-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">测试连接</button>
-                            </form>
-                            <form method="post" asp-page-handler="Delete" asp-route-id="@s.Id" class="inline">
-                                <button type="submit" class="text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-500 hover:bg-red-50">删除</button>
-                            </form>
+                        <td class="!text-xs !text-gray-400">@(s.LastSyncAt?.ToString("u") ?? "—")</td>
+                        <td>
+                            <div class="flex items-center justify-end gap-1.5">
+                                <a class="btn-primary btn-sm" asp-page="Import" asp-route-sourceId="@s.Id">导入</a>
+                                <form method="post" asp-page-handler="Test" asp-route-id="@s.Id" class="inline">
+                                    <button type="submit" class="btn-secondary btn-sm">测试连接</button>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@s.Id" class="inline">
+                                    <button type="submit" class="btn-danger btn-sm">删除</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 }
                 @if (Model.Sources.Count == 0)
                 {
-                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">暂无数据源</td></tr>
+                    <tr>
+                        <td colspan="5" class="!py-12 text-center text-gray-400">暂无数据源，请在下方添加</td>
+                    </tr>
                 }
             </tbody>
         </table>
     </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">新增 Portainer 数据源</h2>
+    <div class="card card-pad">
+        <h2 class="section-title mb-4">新增 Portainer 数据源</h2>
         <form method="post" asp-page-handler="Create" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">名称 *</label>
-                    <input asp-for="NewName" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="生产 Portainer" />
+                    <label class="field-label">名称 *</label>
+                    <input asp-for="NewName" class="input" placeholder="生产 Portainer" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">类型</label>
-                    <select asp-for="NewType" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                    <label class="field-label">类型</label>
+                    <select asp-for="NewType" class="select">
                         <option value="Portainer">Portainer</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">BaseUrl *</label>
-                    <input asp-for="NewBaseUrl" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="https://portainer.example.com" />
+                    <label class="field-label">BaseUrl *</label>
+                    <input asp-for="NewBaseUrl" class="input" placeholder="https://portainer.example.com" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                    <input asp-for="NewApiKey" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="ptr_xxx" />
+                    <label class="field-label">API Key</label>
+                    <input asp-for="NewApiKey" class="input" placeholder="ptr_xxx" />
                 </div>
             </div>
-            <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">保存并测试连接</button>
+            <button type="submit" class="btn-primary">保存并测试连接</button>
         </form>
     </div>
 </div>

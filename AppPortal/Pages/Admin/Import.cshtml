@@ -4,56 +4,61 @@
     ViewData["Title"] = "从数据源导入";
 }
 
-<div class="max-w-3xl mx-auto">
-    <div class="mb-6">
-        <a class="text-sm text-blue-600 hover:text-blue-800" asp-page="Sources">&larr; 返回数据源</a>
-    </div>
+<div class="page-shell-narrow">
+    <a class="back-link" asp-page="Sources">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        返回数据源
+    </a>
 
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">导入应用</h1>
+    <div class="mb-7">
+        <h1 class="page-title">导入应用</h1>
         @if (Model.Source is not null)
         {
-            <p class="text-sm text-gray-500 mt-1">数据源：@Model.Source.Name · @Model.Source.Type</p>
+            <p class="page-desc">数据源：@Model.Source.Name · <span class="badge-info align-middle">@Model.Source.Type</span></p>
         }
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
-        <div class="bg-red-50 text-red-700 rounded-lg p-3 text-sm mb-4">@Model.Error</div>
+        <div class="alert-error">@Model.Error</div>
     }
 
     @if (Model.Draft is null)
     {
-        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <table class="w-full text-sm">
-                <thead class="bg-gray-50 border-b border-gray-200">
+        <div class="table-panel">
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <th class="text-left px-4 py-3 font-medium text-gray-600">名称</th>
-                        <th class="text-left px-4 py-3 font-medium text-gray-600">类型</th>
-                        <th class="text-left px-4 py-3 font-medium text-gray-600">元数据</th>
-                        <th class="text-right px-4 py-3 font-medium text-gray-600">操作</th>
+                        <th>名称</th>
+                        <th>类型</th>
+                        <th>元数据</th>
+                        <th class="!text-right">操作</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody>
                     @foreach (var c in Model.Candidates)
                     {
                         <tr>
-                            <td class="px-4 py-3 font-medium text-gray-900">@c.Name</td>
-                            <td class="px-4 py-3 text-gray-600">@c.Kind</td>
-                            <td class="px-4 py-3 text-xs text-gray-500">@c.Meta</td>
-                            <td class="px-4 py-3 text-right">
-                                <a class="text-xs px-3 py-1.5 rounded-md border border-blue-200 text-blue-600 hover:bg-blue-50"
-                                   asp-page="Import"
-                                   asp-route-sourceId="@Model.Source?.Id"
-                                   asp-route-externalId="@c.ExternalId">
-                                    预览
-                                </a>
+                            <td class="!font-medium !text-gray-900">@c.Name</td>
+                            <td>@c.Kind</td>
+                            <td class="!text-xs !text-gray-400 mono">@c.Meta</td>
+                            <td>
+                                <div class="flex justify-end">
+                                    <a class="btn-primary btn-sm"
+                                       asp-page="Import"
+                                       asp-route-sourceId="@Model.Source?.Id"
+                                       asp-route-externalId="@c.ExternalId">
+                                        预览
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }
                     @if (Model.Candidates.Count == 0)
                     {
-                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">未找到 stack</td></tr>
+                        <tr>
+                            <td colspan="4" class="!py-12 text-center text-gray-400">未找到 stack</td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -63,30 +68,31 @@
     {
         <form method="post" asp-page-handler="Import" asp-route-sourceId="@Model.Source?.Id">
             <input type="hidden" name="SelectedExternalId" value="@Model.Draft.ExternalId" />
-            <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+            <div class="card card-pad space-y-5">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">@Model.Draft.Name</h2>
-                    <p class="text-sm text-gray-500">@Model.Draft.Description</p>
-                    <p class="text-xs text-gray-400 mt-1">ExternalId：@Model.Draft.ExternalId</p>
+                    <p class="text-sm text-gray-500 mt-1">@Model.Draft.Description</p>
+                    <p class="text-xs text-gray-400 mono mt-1.5">ExternalId · @Model.Draft.ExternalId</p>
                 </div>
 
                 @for (var mi = 0; mi < Model.Draft.Modules.Count; mi++)
                 {
                     var mod = Model.Draft.Modules[mi];
-                    <div class="border border-gray-100 rounded-lg p-4">
+                    <div class="rounded-xl border border-gray-200/80 p-4 bg-gray-50/40">
                         <div class="flex items-center gap-3 mb-3">
-                            <label class="text-xs text-gray-500">模块名</label>
-                            <input class="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm" name="ModuleName_@mi" value="@mod.Name" />
-                            <span class="text-xs text-gray-400">service: @mod.SourceService</span>
+                            <label class="field-label !mb-0 shrink-0">模块名</label>
+                            <input class="input !py-2 flex-1" name="ModuleName_@mi" value="@mod.Name" />
+                            <span class="text-xs text-gray-400 mono shrink-0">@mod.SourceService</span>
                         </div>
                         <div class="space-y-2">
                             @for (var ei = 0; ei < mod.Endpoints.Count; ei++)
                             {
                                 var ep = mod.Endpoints[ei];
-                                <div class="flex items-center gap-3 text-sm">
-                                    <input type="checkbox" name="Selected_@(mi)_@(ei)" value="true" checked="@ep.Selected" />
-                                    <span class="w-40 truncate">@ep.DisplayName</span>
-                                    <span class="text-xs text-gray-500 font-mono">
+                                <div class="flex items-center gap-3 text-sm bg-white rounded-lg border border-gray-100 px-3 py-2">
+                                    <input type="checkbox" name="Selected_@(mi)_@(ei)" value="true" checked="@ep.Selected"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500/30" />
+                                    <span class="w-40 truncate font-medium text-gray-800">@ep.DisplayName</span>
+                                    <span class="text-xs text-gray-500 mono">
                                         @(ep.HostPort?.ToString() ?? "—") → @(ep.ContainerPort?.ToString() ?? "—") · @ep.Kind
                                     </span>
                                 </div>
@@ -95,11 +101,9 @@
                     </div>
                 }
 
-                <div class="flex items-center gap-3 pt-2">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium">确认导入</button>
-                    <a class="text-sm text-gray-600 hover:text-gray-900"
-                       asp-page="Import"
-                       asp-route-sourceId="@Model.Source?.Id">返回列表</a>
+                <div class="flex items-center gap-3 pt-1">
+                    <button type="submit" class="btn-primary">确认导入</button>
+                    <a class="btn-secondary" asp-page="Import" asp-route-sourceId="@Model.Source?.Id">返回列表</a>
                 </div>
             </div>
         </form>

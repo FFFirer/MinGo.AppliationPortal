@@ -4,30 +4,31 @@
     ViewData["Title"] = Model.App.Name;
 }
 
-<div class="max-w-3xl mx-auto">
-    <div class="mb-6">
-        <a class="text-sm text-blue-600 hover:text-blue-800 transition-colors" asp-page="/Index">&larr; 返回应用中心</a>
-    </div>
+<div class="page-shell-narrow">
+    <a class="back-link" asp-page="/Index">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        返回应用中心
+    </a>
 
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+    <div class="card card-pad mb-6">
         <div class="flex items-start gap-4">
             @if (!string.IsNullOrEmpty(Model.App.IconUrl))
             {
-                <img src="@Model.App.IconUrl" alt="@Model.App.Name" class="w-14 h-14 object-contain rounded-lg" />
+                <div class="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+                    <img src="@Model.App.IconUrl" alt="@Model.App.Name" class="w-11 h-11 object-contain" />
+                </div>
             }
             else
             {
-                <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center text-2xl font-bold text-blue-600">
-                    @Model.App.Name[..1]
-                </div>
+                <div class="app-avatar-lg shrink-0">@Model.App.Name[..1]</div>
             }
             <div class="flex-1 min-w-0">
-                <h1 class="text-2xl font-bold text-gray-900">@Model.App.Name</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">@Model.App.Name</h1>
                 @if (!string.IsNullOrEmpty(Model.App.Description))
                 {
-                    <p class="text-gray-500 mt-1">@Model.App.Description</p>
+                    <p class="text-gray-500 mt-1.5 leading-relaxed">@Model.App.Description</p>
                 }
-                <p class="text-xs text-gray-400 mt-2">来源：@Model.SourceLabel</p>
+                <p class="text-xs text-gray-400 mt-2.5">来源：@Model.SourceLabel</p>
             </div>
         </div>
     </div>
@@ -35,11 +36,11 @@
     @if (Model.Hosts.Count > 1)
     {
         <div class="mb-6 flex flex-wrap items-center gap-2">
-            <span class="text-sm text-gray-500 mr-1">访问网络</span>
+            <span class="text-xs font-medium text-gray-400 uppercase tracking-wide mr-1">访问网络</span>
             @foreach (var h in Model.Hosts)
             {
                 var isActive = Model.ActiveHost?.Id == h.Id;
-                <a class="px-3 py-1.5 rounded-full text-sm border transition-colors @(isActive ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-700")"
+                <a class="host-chip @(isActive ? "host-chip-active" : "host-chip-idle")"
                    asp-page="/Detail"
                    asp-route-id="@Model.App.Id"
                    asp-route-host="@h.Id">
@@ -50,57 +51,59 @@
     }
     else if (Model.ActiveHost is not null)
     {
-        <div class="mb-4 text-sm text-gray-500">
-            访问网络：<span class="text-gray-800 font-medium">@Model.ActiveHost.Name</span>
-            <span class="text-gray-400">（@Model.ActiveHost.Address）</span>
+        <div class="mb-5 flex items-center gap-2 text-sm">
+            <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">访问网络</span>
+            <span class="badge-info">@Model.ActiveHost.Name</span>
+            <span class="text-gray-400 mono">@Model.ActiveHost.Address</span>
         </div>
     }
 
     @if (Model.ModuleViews.Count == 0)
     {
-        <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
-            <div class="text-4xl mb-3">🔗</div>
-            <p class="text-gray-500">该应用暂无可用模块入口</p>
+        <div class="empty-state">
+            <div class="empty-icon">🔗</div>
+            <p class="empty-title">暂无可用入口</p>
+            <p class="empty-desc">该应用还没有配置模块入口</p>
         </div>
     }
     else
     {
-        <div class="space-y-4">
+        <div class="space-y-3">
             @foreach (var mv in Model.ModuleViews)
             {
-                <details class="bg-white rounded-xl border border-gray-200 overflow-hidden" @(mv.AllUnreachable ? "" : "open")>
-                    <summary class="px-5 py-4 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors">
-                        <div>
-                            <div class="font-semibold text-gray-900">@mv.Module.Name</div>
+                <details class="module-panel" @(mv.AllUnreachable ? "" : "open")>
+                    <summary class="module-summary">
+                        <div class="min-w-0">
+                            <div class="section-title truncate">@mv.Module.Name</div>
                             @if (!string.IsNullOrEmpty(mv.Module.Description))
                             {
-                                <div class="text-xs text-gray-500 mt-0.5">@mv.Module.Description</div>
+                                <div class="text-xs text-gray-500 mt-0.5 truncate">@mv.Module.Description</div>
                             }
                         </div>
-                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                        <div class="flex items-center gap-2 shrink-0">
                             @if (mv.UnreachableCount > 0)
                             {
-                                <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">@mv.UnreachableCount 项不可达</span>
+                                <span class="badge-warn">@mv.UnreachableCount 项不可达</span>
                             }
-                            <span>@mv.Endpoints.Count 个入口</span>
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span class="badge-muted">@mv.Endpoints.Count 个入口</span>
+                            <svg class="w-4 h-4 text-gray-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </div>
                     </summary>
-                    <div class="border-t border-gray-100 divide-y divide-gray-50">
+                    <div>
                         @foreach (var ep in mv.Endpoints)
                         {
-                            <div class="px-5 py-3 flex items-center justify-between gap-4">
+                            <div class="endpoint-row @(ep.Resolved.IsReachable ? "" : "endpoint-row-muted")">
                                 <div class="min-w-0">
-                                    <div class="text-sm font-medium text-gray-800">@ep.Resolved.Endpoint.DisplayName</div>
+                                    <div class="text-sm font-medium text-gray-800 truncate">@ep.Resolved.Endpoint.DisplayName</div>
                                     @if (ep.Resolved.IsReachable)
                                     {
-                                        <div class="text-xs text-gray-500 truncate">@ep.Resolved.DisplayText</div>
+                                        <div class="text-xs text-gray-400 mono truncate mt-0.5">@ep.Resolved.DisplayText</div>
                                     }
                                     else
                                     {
-                                        <div class="text-xs text-gray-400">当前网络不可达</div>
+                                        <div class="text-xs text-gray-400 mt-0.5">当前网络不可达</div>
                                     }
                                 </div>
                                 <div class="shrink-0">
@@ -109,7 +112,7 @@
                                         <a href="@ep.Resolved.Url"
                                            target="_blank"
                                            rel="noopener noreferrer"
-                                           class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50">
+                                           class="btn-primary btn-sm">
                                             打开
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -118,11 +121,11 @@
                                     }
                                     else if (ep.Resolved.IsReachable)
                                     {
-                                        <span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 font-mono">@ep.Resolved.DisplayText</span>
+                                        <span class="badge-muted mono px-2.5 py-1">@ep.Resolved.DisplayText</span>
                                     }
                                     else
                                     {
-                                        <span class="text-xs px-2 py-1 rounded bg-gray-50 text-gray-400">不可达</span>
+                                        <span class="badge-muted">不可达</span>
                                     }
                                 </div>
                             </div>
@@ -133,17 +136,3 @@
         </div>
     }
 </div>
-
-@section Scripts {
-    <script>
-        (function () {
-            var hostLinks = document.querySelectorAll('a[asp-route-host], a[href*="host="]');
-            // Remember last selected host via query param host=
-            var params = new URLSearchParams(window.location.search);
-            var host = params.get('host');
-            if (host) {
-                try { localStorage.setItem('appportal.activeHost', host); } catch (e) { }
-            }
-        })();
-    </script>
-}

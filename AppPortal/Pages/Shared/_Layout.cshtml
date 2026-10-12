@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8" />
@@ -6,30 +6,32 @@
     <title>@ViewData["Title"] - 应用门户</title>
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
-    <header>
-        <nav class="bg-white shadow-sm border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <a class="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors" asp-page="/Index">🚀 应用门户</a>
-                    <div class="flex items-center gap-4">
-                        <a class="text-sm text-gray-600 hover:text-blue-600 transition-colors" asp-page="/Index">首页</a>
-                        <a class="text-sm text-gray-600 hover:text-blue-600 transition-colors" asp-page="/Admin/Index">管理后台</a>
-                    </div>
-                </div>
+<body class="min-h-screen flex flex-col text-slate-800">
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 border-b border-gray-200/80">
+        <div class="page-shell !py-0">
+            <div class="flex justify-between items-center h-16">
+                <a class="flex items-center gap-2.5 group" asp-page="/Index">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-lg shadow-sm shadow-blue-600/25">🚀</span>
+                    <span class="text-lg font-bold tracking-tight text-gray-900 group-hover:text-blue-700 transition-colors">应用门户</span>
+                </a>
+                <nav class="flex items-center gap-1">
+                    <a class="px-3.5 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-50/70 transition-colors"
+                       asp-page="/Index">首页</a>
+                    <a class="px-3.5 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-50/70 transition-colors"
+                       asp-page="/Admin/Index">管理后台</a>
+                </nav>
             </div>
-        </nav>
+        </div>
     </header>
 
     <main class="flex-1">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            @RenderBody()
-        </div>
+        @RenderBody()
     </main>
 
-    <footer class="bg-white border-t border-gray-200 py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
-            &copy; @DateTime.Now.Year 应用门户 — All Rights Reserved
+    <footer class="mt-10 border-t border-gray-200/80 bg-white/50">
+        <div class="page-shell !py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-400">
+            <span>&copy; @DateTime.Now.Year 应用门户</span>
+            <span>模块化入口 · 多 Host · 数据源导入</span>
         </div>
     </footer>
 

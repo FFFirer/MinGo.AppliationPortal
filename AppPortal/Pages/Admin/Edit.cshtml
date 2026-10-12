@@ -4,40 +4,40 @@
     ViewData["Title"] = "编辑应用";
 }
 
-<div class="max-w-3xl mx-auto">
+<div class="page-shell-narrow">
     <div class="mb-6">
-        <a class="text-sm text-blue-600 hover:text-blue-800 transition-colors" asp-page="Index">&larr; 返回管理列表</a>
+        <a class="back-link" asp-page="Index"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>返回管理列表</a>
     </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <div class="card card-pad">
         <h1 class="text-xl font-bold text-gray-900 mb-6">编辑应用</h1>
 
         <form method="post">
             <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.Name">应用名称 *</label>
-                    <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.Name" />
+                    <label class="field-label" asp-for="App.Name">应用名称 *</label>
+                    <input class="input" asp-for="App.Name" />
                     <span class="text-xs text-red-500" asp-validation-for="App.Name"></span>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.Description">描述</label>
-                    <textarea class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.Description" rows="2"></textarea>
+                    <label class="field-label" asp-for="App.Description">描述</label>
+                    <textarea class="textarea" asp-for="App.Description" rows="2"></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="sm:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.IconUrl">图标地址</label>
-                        <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.IconUrl" placeholder="https://example.com/icon.png" />
+                        <label class="field-label" asp-for="App.IconUrl">图标地址</label>
+                        <input class="input" asp-for="App.IconUrl" placeholder="https://example.com/icon.png" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" asp-for="App.SortOrder">排序</label>
-                        <input class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" asp-for="App.SortOrder" type="number" min="0" />
+                        <label class="field-label" asp-for="App.SortOrder">排序</label>
+                        <input class="input" asp-for="App.SortOrder" type="number" min="0" />
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">可达 Host</label>
+                    <label class="field-label">可达 Host</label>
                     <div class="flex flex-wrap gap-3">
                         @for (var hi = 0; hi < Model.Hosts.Count; hi++)
                         {
@@ -67,8 +67,8 @@
                             var mod = Model.App.Modules[mi];
                             <div class="module-block border border-gray-200 rounded-lg p-4">
                                 <div class="flex gap-2 items-start mb-3">
-                                    <input class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" name="App.Modules[@mi].Name" value="@mod.Name" placeholder="模块名称（如：前台 / API）" />
-                                    <input class="rounded-lg border border-gray-300 px-3 py-2 text-sm w-28" name="App.Modules[@mi].Order" value="@mod.Order" type="number" placeholder="排序" />
+                                    <input class="input" name="App.Modules[@mi].Name" value="@mod.Name" placeholder="模块名称（如：前台 / API）" />
+                                    <input class="input w-28" name="App.Modules[@mi].Order" value="@mod.Order" type="number" placeholder="排序" />
                                     <label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
                                         <input type="checkbox" name="App.Modules[@mi].IsEnabled" value="true" checked="@mod.IsEnabled" />
                                         启用
@@ -106,8 +106,8 @@
                 </div>
 
                 <div class="flex items-center gap-3 pt-2">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium">保存</button>
-                    <a class="text-sm text-gray-600 hover:text-gray-900" asp-page="Index">取消</a>
+                    <button type="submit" class="btn-primary">保存</button>
+                    <a class="btn-secondary" asp-page="Index">取消</a>
                 </div>
             </div>
         </form>
@@ -139,8 +139,8 @@
                 div.className = 'module-block border border-gray-200 rounded-lg p-4';
                 div.innerHTML = [
                     '<div class="flex gap-2 items-start mb-3">',
-                    '<input class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" name="App.Modules[' + mi + '].Name" placeholder="模块名称" />',
-                    '<input class="rounded-lg border border-gray-300 px-3 py-2 text-sm w-28" name="App.Modules[' + mi + '].Order" type="number" placeholder="排序" />',
+                    '<input class="input" name="App.Modules[' + mi + '].Name" placeholder="模块名称" />',
+                    '<input class="input w-28" name="App.Modules[' + mi + '].Order" type="number" placeholder="排序" />',
                     '<label class="inline-flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap"><input type="checkbox" name="App.Modules[' + mi + '].IsEnabled" value="true" checked /> 启用</label>',
                     '<input type="hidden" name="App.Modules[' + mi + '].IsEnabled" value="false" />',
                     '<button type="button" class="btn-remove-module p-2 text-gray-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>',
