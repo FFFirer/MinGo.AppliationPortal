@@ -25,17 +25,17 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>名称</th>
+                        <th class="col-name">名称</th>
                         <th>地址</th>
-                        <th>默认</th>
-                        <th class="!text-right">操作</th>
+                        <th class="col-nowrap">默认</th>
+                        <th class="col-actions">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var h in Model.Hosts)
                     {
                         <tr>
-                            <td class="!font-medium !text-gray-900">@h.Name</td>
+                            <td class="col-name">@h.Name</td>
                             <td>
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach (var addr in h.Addresses)
@@ -48,14 +48,14 @@
                                     }
                                 </div>
                             </td>
-                            <td>
+                            <td class="col-nowrap">
                                 @if (h.IsDefault)
                                 {
                                     <span class="badge-info">默认</span>
                                 }
                             </td>
-                            <td>
-                                <div class="flex justify-end">
+                            <td class="col-actions">
+                                <div class="row-actions">
                                     <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
                                         <button type="submit" class="btn-danger btn-sm">
                                             <svg class="icon icon-sm"><use href="#i-trash"></use></svg>删除
@@ -67,8 +67,8 @@
                     }
                     @if (Model.Hosts.Count == 0)
                     {
-                        <tr>
-                            <td colspan="4" class="!py-12 text-center text-gray-400">暂无 Host，请在下方添加</td>
+                        <tr class="empty-row">
+                            <td colspan="4">暂无 Host，请在下方添加</td>
                         </tr>
                     }
                 </tbody>

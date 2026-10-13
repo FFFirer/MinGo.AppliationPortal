@@ -39,19 +39,19 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>名称</th>
-                        <th>模块</th>
-                        <th>来源</th>
-                        <th>排序</th>
-                        <th>状态</th>
-                        <th class="!text-right">操作</th>
+                        <th class="col-name">名称</th>
+                        <th class="col-nowrap">模块</th>
+                        <th class="col-nowrap">来源</th>
+                        <th class="col-nowrap col-num">排序</th>
+                        <th class="col-nowrap">状态</th>
+                        <th class="col-actions">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var app in Model.Apps)
                     {
                         <tr>
-                            <td>
+                            <td class="col-name">
                                 <div class="flex items-center gap-3">
                                     @if (!string.IsNullOrEmpty(app.IconUrl))
                                     {
@@ -72,8 +72,8 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>@app.Modules.Count 个</td>
-                            <td>
+                            <td class="col-nowrap">@app.Modules.Count 个</td>
+                            <td class="col-nowrap">
                                 @if (app.SourceId is null)
                                 {
                                     <span class="badge-muted">手工</span>
@@ -83,8 +83,8 @@
                                     <span class="badge-info">导入</span>
                                 }
                             </td>
-                            <td class="!text-gray-500">@app.SortOrder</td>
-                            <td>
+                            <td class="col-num">@app.SortOrder</td>
+                            <td class="col-nowrap">
                                 @if (app.IsEnabled)
                                 {
                                     <span class="badge-success"><span class="badge-dot"></span>启用</span>
@@ -94,8 +94,8 @@
                                     <span class="badge-muted"><span class="badge-dot"></span>禁用</span>
                                 }
                             </td>
-                            <td>
-                                <div class="toolbar justify-end">
+                            <td class="col-actions">
+                                <div class="row-actions">
                                     <form method="post" asp-page-handler="Toggle" asp-route-id="@app.Id" class="inline">
                                         <button type="submit" class="btn-secondary btn-sm">@(app.IsEnabled ? "禁用" : "启用")</button>
                                     </form>

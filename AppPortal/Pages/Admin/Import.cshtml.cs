@@ -33,11 +33,9 @@ public class ImportModel : PageModel
     [BindProperty]
     public string GenScheme { get; set; } = "http";
 
+    /// <summary>Selected AccessHost Id; rewrite expands to every address on that host.</summary>
     [BindProperty]
-    public string? GenHost { get; set; }
-
-    [BindProperty]
-    public string? GenHostCustom { get; set; }
+    public string? GenHostId { get; set; }
 
     [BindProperty]
     public string? GenPath { get; set; }
@@ -56,7 +54,7 @@ public class ImportModel : PageModel
         }
 
         Hosts = await _hosts.GetAllAsync();
-        GenHost = Hosts.SelectMany(h => h.Addresses).FirstOrDefault();
+        GenHostId = ResolveDefaultHostId(Hosts);
 
         try
         {
@@ -71,12 +69,15 @@ public class ImportModel : PageModel
         if (!string.IsNullOrWhiteSpace(externalId))
         {
             SelectedExternalId = externalId;
-            var candidate = Candidates.FirstOrDefault(c => c.ExternalId == externalId);
+            var candidate = Candidates.FirstOrDefault(c => c.ExternalId == externalId)
+                ?? Candidates.FirstOrDefault(c => string.Equals(c.Name, externalId, StringComparison.OrdinalIgnoreCase));
             if (candidate is not null)
             {
                 try
                 {
                     Draft = await _import.ResolveDraftAsync(Source, candidate);
+                    SelectedExternalId = Draft.ExternalId ?? candidate.ExternalId;
+                    RewriteUrlsFromPortLabels();
                 }
                 catch (Exception ex)
                 {
@@ -112,11 +113,16 @@ public class ImportModel : PageModel
         }
 
         Hosts = await _hosts.GetAllAsync();
+        if (string.IsNullOrWhiteSpace(GenHostId))
+        {
+            GenHostId = ResolveDefaultHostId(Hosts);
+        }
 
         try
         {
             Candidates = await _import.ListCandidatesAsync(Source);
-            var candidate = Candidates.FirstOrDefault(c => c.ExternalId == SelectedExternalId);
+            var candidate = Candidates.FirstOrDefault(c => c.ExternalId == SelectedExternalId)
+                ?? Candidates.FirstOrDefault(c => string.Equals(c.Name, SelectedExternalId, StringComparison.OrdinalIgnoreCase));
             if (candidate is null)
             {
                 Error = "未选择有效 stack";
@@ -124,8 +130,11 @@ public class ImportModel : PageModel
             }
 
             Draft = await _import.ResolveDraftAsync(Source, candidate);
-            ApplyPostedAddresses();
             RewriteUrlsFromPortLabels();
+            if (!rewriteOnly)
+            {
+                ApplyPostedAddresses();
+            }
 
             if (rewriteOnly)
             {
@@ -143,6 +152,13 @@ public class ImportModel : PageModel
         }
     }
 
+    private static string? ResolveDefaultHostId(List<AccessHost> hosts)
+    {
+        var ordered = hosts.OrderBy(h => h.SortOrder).ThenBy(h => h.Name).ToList();
+        var pick = ordered.FirstOrDefault(h => h.IsDefault) ?? ordered.FirstOrDefault();
+        return pick?.Id.ToString();
+    }
+
     private void ApplyPostedAddresses()
     {
         if (Draft is null)
@@ -156,10 +172,8 @@ public class ImportModel : PageModel
             {
                 var addr = Draft.Modules[mi].Addresses[ai];
                 var selKey = $"Sel_{mi}_{ai}";
-                if (Request.Form.ContainsKey(selKey))
-                {
-                    addr.Selected = Request.Form[selKey] == "true";
-                }
+                // Unchecked checkboxes are omitted from the form post.
+                addr.Selected = Request.Form.ContainsKey(selKey);
 
                 var urlKey = $"Url_{mi}_{ai}";
                 if (Request.Form.ContainsKey(urlKey))
@@ -171,8 +185,8 @@ public class ImportModel : PageModel
     }
 
     /// <summary>
-    /// Rebuild URL strings from Portainer labels like 8080→80 using selected host/scheme/path.
-    /// Keeps hand-edited full URLs that no longer look like placeholders.
+    /// Rebuild address list from Portainer labels like 8080→80.
+    /// Expands each port to every IP on the selected host (all selected by default).
     /// </summary>
     private void RewriteUrlsFromPortLabels()
     {
@@ -181,13 +195,19 @@ public class ImportModel : PageModel
             return;
         }
 
-        var scheme = string.Equals(GenScheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
-        var host = (!string.IsNullOrWhiteSpace(GenHostCustom) ? GenHostCustom : GenHost ?? "").Trim().TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(host))
+        var host = Hosts.FirstOrDefault(h => h.Id.ToString() == GenHostId)
+            ?? Hosts.FirstOrDefault(h => string.Equals(h.Name, GenHostId, StringComparison.OrdinalIgnoreCase));
+        var ips = host?.Addresses
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .Select(a => a.Trim().TrimEnd('/'))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? new List<string>();
+        if (ips.Count == 0)
         {
             return;
         }
 
+        var scheme = string.Equals(GenScheme, "https", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
         var path = (GenPath ?? "").Trim();
         if (path.Length > 0 && !path.StartsWith('/'))
         {
@@ -196,17 +216,43 @@ public class ImportModel : PageModel
 
         foreach (var module in Draft.Modules)
         {
-            foreach (var addr in module.Addresses)
+            var templates = module.Addresses
+                .GroupBy(a => a.Label ?? a.Url)
+                .Select(g => g.First())
+                .ToList();
+
+            var expanded = new List<AppDraftAddress>();
+            foreach (var template in templates)
             {
-                var label = addr.Label ?? "";
-                // Label is "8080→80" or "8080" or "80"
+                var label = template.Label ?? "";
                 var left = label.Split('→', '-', ':')[0].Trim();
-                if (int.TryParse(left, out var port) && port > 0)
+                if (!int.TryParse(left, out var port) || port <= 0)
                 {
-                    var portSeg = port is 80 && scheme == "http" || port is 443 && scheme == "https" ? "" : $":{port}";
-                    addr.Url = $"{scheme}://{host}{portSeg}{path}";
+                    // Keep hand-edited URLs without a parseable port as-is.
+                    expanded.Add(new AppDraftAddress
+                    {
+                        Url = template.Url,
+                        Label = template.Label,
+                        Selected = template.Selected
+                    });
+                    continue;
+                }
+
+                foreach (var ip in ips)
+                {
+                    var portSeg = port is 80 && scheme == "http" || port is 443 && scheme == "https"
+                        ? ""
+                        : $":{port}";
+                    expanded.Add(new AppDraftAddress
+                    {
+                        Url = $"{scheme}://{ip}{portSeg}{path}",
+                        Label = template.Label,
+                        Selected = true
+                    });
                 }
             }
+
+            module.Addresses = expanded;
         }
     }
 }

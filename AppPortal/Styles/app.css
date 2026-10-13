@@ -101,24 +101,140 @@
   }
 
   .table-panel {
-    @apply bg-white rounded-2xl border border-gray-200/80 shadow-sm shadow-gray-900/[0.03] overflow-hidden;
+    @apply bg-white rounded-2xl border border-gray-200/80 shadow-sm shadow-gray-900/[0.03];
+    overflow: hidden;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
+
+  .table-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .table-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .table-scroll::-webkit-scrollbar-thumb {
+    background: rgb(203 213 225);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .table-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgb(148 163 184);
+    background-clip: content-box;
+    border: 2px solid transparent;
   }
 
   .data-table {
-    @apply w-full text-sm;
+    @apply text-sm;
+    border-collapse: separate;
+    border-spacing: 0;
+    /* At least full width; grow to content so cells never crush */
+    width: max-content;
+    min-width: 100%;
   }
 
   .data-table thead th {
-    @apply text-left px-4 py-3 font-medium text-gray-500 bg-gray-50/80
-           border-b border-gray-200/80 text-xs uppercase tracking-wide;
+    @apply text-left px-4 py-2.5 font-semibold text-gray-500 bg-gray-50/95
+           border-b border-gray-200 text-xs tracking-wide;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-sizing: border-box;
   }
 
   .data-table tbody td {
-    @apply px-4 py-3 text-gray-600 align-middle;
+    @apply px-4 py-3.5 text-gray-600 align-middle;
+    border-bottom: 1px solid rgb(243 244 246);
+    box-sizing: border-box;
+  }
+
+  /* Edge breathing room so content never sits on the rounded panel border */
+  .data-table thead th:first-child,
+  .data-table tbody td:first-child {
+    padding-left: 1.25rem;
+  }
+
+  .data-table thead th:last-child,
+  .data-table tbody td:last-child {
+    padding-right: 1.25rem;
   }
 
   .data-table tbody tr {
-    @apply border-b border-gray-100 last:border-0 transition-colors hover:bg-gray-50/60;
+    @apply transition-colors;
+  }
+
+  .data-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .data-table tbody tr:hover td {
+    @apply bg-blue-50/50;
+  }
+
+  /* Column roles */
+  .data-table .col-name {
+    @apply font-medium text-gray-900;
+  }
+
+  .data-table .col-meta {
+    @apply text-xs text-gray-400;
+  }
+
+  .data-table .col-num {
+    @apply text-gray-500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .data-table .col-nowrap {
+    white-space: nowrap;
+  }
+
+  .data-table .cell-truncate {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Action column stays visible while scrolling horizontally */
+  .data-table .col-actions {
+    @apply text-right;
+    white-space: nowrap;
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    padding-right: 1.25rem;
+    background: rgb(255 255 255);
+    box-shadow: -12px 0 16px -12px rgb(15 23 42 / 0.12);
+  }
+
+  .data-table thead th.col-actions {
+    z-index: 3;
+    background: rgb(249 250 251);
+  }
+
+  .data-table tbody tr:hover td.col-actions {
+    background: rgb(239 246 255);
+  }
+
+  .data-table .empty-row td {
+    @apply py-14 text-center text-gray-400 text-sm;
+  }
+
+  .data-table .row-actions {
+    @apply inline-flex items-center justify-end gap-1.5 flex-wrap;
   }
 
   .field-label {
@@ -254,13 +370,7 @@
 /* ——— Mobile adaptation ——— */
 @layer components {
   /* Tables: horizontal scroll with minimum width so columns stay usable */
-  .table-scroll {
-    @apply overflow-x-auto -mx-4 sm:mx-0;
-  }
-
-  .table-scroll .data-table {
-    @apply min-w-[640px];
-  }
+  /* table-scroll rules live above with .table-panel */
 
   /* Detail endpoint rows stack on small screens */
   .endpoint-row {
@@ -348,10 +458,25 @@
   .data-table thead th {
     @apply !text-left;
     white-space: nowrap;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .data-table tbody td {
     @apply text-sm;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .data-table thead th:first-child,
+  .data-table tbody td:first-child {
+    padding-left: 1.125rem;
+  }
+
+  .data-table thead th:last-child,
+  .data-table tbody td:last-child,
+  .data-table .col-actions {
+    padding-right: 1.125rem;
   }
 
   /* Card lists: slightly tighter gap */
@@ -374,6 +499,14 @@
   .host-option {
     @apply inline-flex items-center gap-2 text-sm text-gray-700 border border-gray-200
            rounded-xl px-3 py-2.5 min-h-[44px];
+  }
+
+  .host-option:has(input[type="radio"]:checked) {
+    @apply border-blue-500 bg-blue-50 text-blue-800 ring-2 ring-blue-500/20;
+  }
+
+  .host-option input[type="radio"] {
+    @apply shrink-0;
   }
 
   /* Import module editor on phones */

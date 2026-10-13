@@ -24,20 +24,20 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>名称</th>
-                    <th>类型</th>
-                    <th>状态</th>
-                    <th>最近同步</th>
-                    <th class="!text-right">操作</th>
+                    <th class="col-name">名称</th>
+                    <th class="col-nowrap">类型</th>
+                    <th class="col-nowrap">状态</th>
+                    <th class="col-nowrap col-meta">最近同步</th>
+                    <th class="col-actions">操作</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var s in Model.Sources)
                 {
                     <tr>
-                        <td class="!font-medium !text-gray-900">@s.Name</td>
-                        <td>@s.Type</td>
-                        <td>
+                        <td class="col-name">@s.Name</td>
+                        <td class="col-nowrap">@s.Type</td>
+                        <td class="col-nowrap">
                             @if (s.LastStatus is "connected" or "imported" or "updated")
                             {
                                 <span class="badge-success">@s.LastStatus</span>
@@ -51,9 +51,9 @@
                                 <span class="badge-muted">未测试</span>
                             }
                         </td>
-                        <td class="!text-xs !text-gray-400">@(s.LastSyncAt?.ToString("u") ?? "—")</td>
-                        <td>
-                            <div class="toolbar justify-end">
+                        <td class="col-meta col-nowrap">@(s.LastSyncAt?.ToString("u") ?? "—")</td>
+                        <td class="col-actions">
+                            <div class="row-actions">
                                 <a class="btn-primary btn-sm" asp-page="Import" asp-route-sourceId="@s.Id"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"></use></svg>导入</a>
                                 <form method="post" asp-page-handler="Test" asp-route-id="@s.Id" class="inline">
                                     <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>测试连接</button>
@@ -67,8 +67,8 @@
                 }
                 @if (Model.Sources.Count == 0)
                 {
-                    <tr>
-                        <td colspan="5" class="!py-12 text-center text-gray-400">暂无数据源，请在下方添加</td>
+                    <tr class="empty-row">
+                        <td colspan="5">暂无数据源，请在下方添加</td>
                     </tr>
                 }
             </tbody>

@@ -29,46 +29,35 @@
 
     @if (Model.Draft is null)
     {
-        <div class="table-panel">
-            <div class="table-scroll">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>名称</th>
-                            <th>类型</th>
-                            <th>元数据</th>
-                            <th class="!text-right">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var c in Model.Candidates)
-                        {
-                            <tr>
-                                <td class="!font-medium !text-gray-900">@c.Name</td>
-                                <td>@c.Kind</td>
-                                <td class="!text-xs !text-gray-400 mono">@c.Meta</td>
-                                <td>
-                                    <div class="flex justify-end">
-                                        <a class="btn-primary btn-sm"
-                                           asp-page="Import"
-                                           asp-route-sourceId="@Model.Source?.Id"
-                                           asp-route-externalId="@c.ExternalId">
-                                            <svg class="icon icon-sm"><use href="#i-download"></use></svg>预览
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                        @if (Model.Candidates.Count == 0)
-                        {
-                            <tr>
-                                <td colspan="4" class="!py-12 text-center text-gray-400">未找到 stack</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+        if (Model.Candidates.Count == 0)
+        {
+            <div class="card card-pad text-center text-gray-400 py-12">未找到 stack</div>
+        }
+        else
+        {
+            <div class="space-y-2.5">
+                @foreach (var c in Model.Candidates)
+                {
+                    <div class="card card-pad">
+                        <div class="flex flex-wrap items-start sm:items-center gap-x-4 gap-y-3">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h2 class="font-semibold text-gray-900 break-all">@c.Name</h2>
+                                    <span class="badge-muted">@c.Kind</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mono mt-1.5 break-all">@c.Meta</p>
+                            </div>
+                            <a class="btn-primary btn-sm shrink-0"
+                               asp-page="Import"
+                               asp-route-sourceId="@Model.Source?.Id"
+                               asp-route-externalId="@c.ExternalId">
+                                <svg class="icon icon-sm"><use href="#i-download"></use></svg>预览
+                            </a>
+                        </div>
+                    </div>
+                }
             </div>
-        </div>
+        }
     }
     else
     {
@@ -78,7 +67,8 @@
             <div class="card card-pad mb-5">
                 <h2 class="section-title mb-3">批量改写地址</h2>
                 <p class="field-hint mb-3">按服务端口生成完整 URL；可在下方逐条修改后导入。地址最终以 URL 字符串保存。</p>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="space-y-4">
+                    @* 必填字段在前 *@
                     <div>
                         <label class="field-label">协议 *</label>
                         <select asp-for="GenScheme" class="select" id="genScheme">
@@ -87,17 +77,43 @@
                         </select>
                     </div>
                     <div>
-                        <label class="field-label">主机 / IP</label>
-                        <select asp-for="GenHost" class="select" id="genHost">
-                            @foreach (var a in Model.Hosts.SelectMany(h => h.Addresses).Distinct())
-                            {
-                                <option value="@a">@a</option>
-                            }
-                            <option value="">自定义…</option>
-                        </select>
-                        <input id="genHostCustom" name="GenHostCustom" class="input !mt-2 !py-2" placeholder="自定义主机，如 192.168.88.244"
-                               value="@(Model.Hosts.SelectMany(h => h.Addresses).Contains(Model.GenHost ?? "") ? "" : Model.GenHost)" />
+                        <label class="field-label">主机 *</label>
+                        @if (Model.Hosts.Count == 0)
+                        {
+                            <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200/70 rounded-xl px-3 py-2">
+                                暂无 Host，请先在 Host 目录中添加。
+                            </p>
+                        }
+                        else
+                        {
+                            <select asp-for="GenHostId" class="select" id="genHostId">
+                                @foreach (var h in Model.Hosts.OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
+                                {
+                                    <option value="@h.Id"
+                                            data-ips="@string.Join("|", h.Addresses)"
+                                            selected="@(string.Equals(Model.GenHostId, h.Id.ToString(), StringComparison.OrdinalIgnoreCase) ? "selected" : null)">
+                                        @h.Name@(h.IsDefault ? "（默认）" : "") — @h.Addresses.Count 个 IP
+                                    </option>
+                                }
+                            </select>
+                            <div class="mt-3 rounded-xl border border-blue-200/70 bg-blue-50/70 px-3 py-2.5">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="icon text-blue-600"><use href="#i-server"></use></svg>
+                                    <span class="text-xs text-blue-700">已选 IP（将全部用于生成地址）</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5" id="hostIpPreview">
+                                    @foreach (var ip in (Model.Hosts.FirstOrDefault(h => h.Id.ToString() == Model.GenHostId)?.Addresses ?? Model.Hosts.FirstOrDefault()?.Addresses ?? new List<string>()))
+                                    {
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-600 text-white text-xs font-medium px-2.5 py-1 mono">
+                                            <svg class="icon icon-sm opacity-90"><use href="#i-check"></use></svg>
+                                            @ip
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
+                    @* 可选字段在后 *@
                     <div>
                         <label class="field-label">路径（可选）</label>
                         <input asp-for="GenPath" class="input" id="genPath" placeholder="/admin 或留空" />
@@ -134,7 +150,7 @@
                                     <input type="checkbox"
                                            name="Sel_@(mi)_@(ai)"
                                            value="true"
-                                           checked="@addr.Selected"
+                                           @(addr.Selected ? "checked" : null)
                                            class="shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500/30" />
                                     <input class="input !py-1.5 !text-sm !min-w-0 !shrink"
                                            name="Url_@(mi)_@(ai)"
@@ -166,17 +182,33 @@
 @section Scripts {
     <script>
         (function () {
-            var custom = document.getElementById('genHostCustom');
-            var hostSel = document.getElementById('genHost');
-            if (hostSel) {
-                hostSel.addEventListener('change', function () {
-                    if (hostSel.value === '') {
-                        custom.focus();
-                    } else {
-                        custom.value = '';
-                    }
+            var sel = document.getElementById('genHostId');
+            var preview = document.getElementById('hostIpPreview');
+            if (!sel || !preview) return;
+
+            function syncHostIps() {
+                var opt = sel.options[sel.selectedIndex];
+                var raw = (opt && opt.getAttribute('data-ips')) || '';
+                var ips = raw.split('|').filter(Boolean);
+                preview.innerHTML = '';
+                if (ips.length === 0) {
+                    var empty = document.createElement('span');
+                    empty.className = 'text-xs text-blue-700';
+                    empty.textContent = '该 Host 暂无 IP';
+                    preview.appendChild(empty);
+                    return;
+                }
+                ips.forEach(function (ip) {
+                    var chip = document.createElement('span');
+                    chip.className = 'inline-flex items-center gap-1 rounded-full bg-blue-600 text-white text-xs font-medium px-2.5 py-1 mono';
+                    chip.innerHTML = '<svg class="icon icon-sm opacity-90"><use href="#i-check"></use></svg>';
+                    chip.appendChild(document.createTextNode(ip));
+                    preview.appendChild(chip);
                 });
             }
+
+            sel.addEventListener('change', syncHostIps);
+            syncHostIps();
         })();
     </script>
 }
