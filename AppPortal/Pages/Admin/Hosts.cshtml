@@ -10,9 +10,14 @@
         返回管理列表
     </a>
 
-    <div class="mb-7">
-        <h1 class="page-title">Host 目录</h1>
-        <p class="page-desc">一个 Host 可包含多个 IP/地址，供模块地址选用</p>
+    <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h1 class="page-title">Host 目录</h1>
+            <p class="page-desc">一个 Host 可包含多个 IP/地址，供模块地址选用</p>
+        </div>
+        <button type="button" id="btnOpenCreate" class="btn-primary">
+            <svg class="icon"><use href="#i-plus"></use></svg>新增 Host
+        </button>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Message))
@@ -56,6 +61,13 @@
                             </td>
                             <td class="col-actions">
                                 <div class="row-actions">
+                                    <button type="button"
+                                            class="btn-secondary btn-sm btn-edit-host"
+                                            data-id="@h.Id"
+                                            data-name="@h.Name"
+                                            data-addresses="@string.Join("\n", h.Addresses)">
+                                        <svg class="icon icon-sm"><use href="#i-pencil"></use></svg>编辑
+                                    </button>
                                     <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
                                         <button type="submit" class="btn-danger btn-sm">
                                             <svg class="icon icon-sm"><use href="#i-trash"></use></svg>删除
@@ -68,29 +80,120 @@
                     @if (Model.Hosts.Count == 0)
                     {
                         <tr class="empty-row">
-                            <td colspan="4">暂无 Host，请在下方添加</td>
+                            <td colspan="4">暂无 Host，请点击「新增 Host」添加</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 
-    <div class="card card-pad">
-        <h2 class="section-title mb-4">新增 Host</h2>
-        <form method="post" asp-page-handler="Create" class="space-y-4">
-            <div>
-                <label class="field-label">名称 *</label>
-                <input asp-for="NewName" class="input" placeholder="办公网 / 公网 / 运维网" />
+<!-- 新增 / 编辑 Host 模态框：标题与操作按钮固定，表单区滚动 -->
+<div id="hostModal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+    <div class="absolute inset-0 bg-gray-900/40" data-host-close></div>
+    <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+                <h2 id="hostModalTitle" class="text-base font-semibold text-gray-900">新增 Host</h2>
+                <button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 hover:text-gray-600" data-host-close aria-label="关闭">
+                    <svg class="icon"><use href="#i-x"></use></svg>
+                </button>
             </div>
-            <div>
-                <label class="field-label">IP / 地址 *</label>
-                <textarea asp-for="NewAddresses" class="textarea" rows="3" placeholder="10.0.0.5&#10;10.0.0.6&#10;portal.example.com"></textarea>
-                <p class="field-hint">一行一个地址，也可用逗号分隔；同一 Host 下可挂多个 IP</p>
-            </div>
-            <button type="submit" class="btn-primary">
-                <svg class="icon"><use href="#i-plus"></use></svg>添加
-            </button>
-        </form>
+
+            <form id="hostModalForm" method="post" action="?handler=Create" class="flex flex-col grow min-h-0">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="EditId" id="hostEditId" value="" />
+
+                <div class="px-5 py-4 overflow-y-auto grow space-y-4">
+                    <div>
+                        <label class="field-label" for="hostName">名称 *</label>
+                        <input id="hostName" name="NewName" class="input" placeholder="办公网 / 公网 / 运维网" autocomplete="off" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="hostAddresses">IP / 地址 *</label>
+                        <textarea id="hostAddresses" name="NewAddresses" class="textarea" rows="4" placeholder="10.0.0.5&#10;10.0.0.6&#10;portal.example.com"></textarea>
+                        <p class="field-hint">一行一个地址，也可用逗号分隔；同一 Host 下可挂多个 IP</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 px-5 py-4 border-t border-gray-100 shrink-0 bg-white rounded-b-2xl">
+                    <button type="submit" class="btn-primary">保存</button>
+                    <button type="button" class="btn-secondary" data-host-close>取消</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var modal = document.getElementById('hostModal');
+            var form = document.getElementById('hostModalForm');
+            var title = document.getElementById('hostModalTitle');
+            var nameInput = document.getElementById('hostName');
+            var addrInput = document.getElementById('hostAddresses');
+            var idInput = document.getElementById('hostEditId');
+
+            function lockScroll(lock) {
+                document.body.style.overflow = lock ? 'hidden' : '';
+            }
+
+            function openModal(mode, data) {
+                data = data || {};
+                if (mode === 'edit') {
+                    title.textContent = '编辑 Host';
+                    form.setAttribute('action', '?handler=Update');
+                    nameInput.name = 'EditName';
+                    addrInput.name = 'EditAddresses';
+                    idInput.value = data.id || '';
+                    nameInput.value = data.name || '';
+                    addrInput.value = data.addresses || '';
+                } else {
+                    title.textContent = '新增 Host';
+                    form.setAttribute('action', '?handler=Create');
+                    nameInput.name = 'NewName';
+                    addrInput.name = 'NewAddresses';
+                    idInput.value = '';
+                    nameInput.value = '';
+                    addrInput.value = '';
+                }
+                modal.classList.remove('hidden');
+                modal.setAttribute('aria-hidden', 'false');
+                lockScroll(true);
+                nameInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.setAttribute('aria-hidden', 'true');
+                lockScroll(false);
+            }
+
+            document.getElementById('btnOpenCreate').addEventListener('click', function () {
+                openModal('create');
+            });
+
+            document.querySelectorAll('.btn-edit-host').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    openModal('edit', {
+                        id: btn.getAttribute('data-id') || '',
+                        name: btn.getAttribute('data-name') || '',
+                        addresses: btn.getAttribute('data-addresses') || ''
+                    });
+                });
+            });
+
+            modal.querySelectorAll('[data-host-close]').forEach(function (el) {
+                el.addEventListener('click', closeModal);
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+}
