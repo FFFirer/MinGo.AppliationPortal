@@ -32,6 +32,7 @@ public class PortainerAppSource : IAppSource
     {
         var stacks = await _client.ListStacksAsync(configJson);
         var stack = stacks.FirstOrDefault(s => s.Id.ToString() == candidate.ExternalId)
+            ?? stacks.FirstOrDefault(s => string.Equals(s.Name, candidate.ExternalId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"未找到 stack {candidate.ExternalId}");
 
         var ports = await _client.GetStackPortsAsync(configJson, stack);
@@ -39,7 +40,8 @@ public class PortainerAppSource : IAppSource
         {
             Name = stack.Name,
             Description = $"Portainer stack · {stack.Name}",
-            ExternalId = stack.Name
+            // Must match ListCandidatesAsync ExternalId (stack Id), or form post cannot resolve.
+            ExternalId = stack.Id.ToString()
         };
 
         foreach (var group in ports.GroupBy(p => p.ServiceName ?? "default"))

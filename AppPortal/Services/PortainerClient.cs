@@ -32,11 +32,11 @@ public class PortainerClient : IPortainerClient
         foreach (var item in doc.RootElement.EnumerateArray())
         {
             result.Add(new PortainerStackInfo(
-                item.GetProperty("Id").GetInt32(),
-                item.TryGetProperty("Name", out var name) ? name.GetString() ?? "" : "",
-                item.TryGetProperty("EndpointId", out var ep) ? ep.GetInt32() : 0,
-                item.TryGetProperty("Status", out var st) ? st.GetString() ?? "" : "",
-                item.TryGetProperty("Type", out var ty) ? ty.GetInt32() : 2));
+                GetInt32(item, "Id"),
+                GetString(item, "Name"),
+                GetInt32(item, "EndpointId"),
+                FormatStackStatus(item),
+                GetInt32(item, "Type", defaultValue: 2)));
         }
 
         return result;
@@ -62,7 +62,7 @@ public class PortainerClient : IPortainerClient
             {
                 foreach (var prop in labelsEl.EnumerateObject())
                 {
-                    labels[prop.Name] = prop.Value.GetString() ?? "";
+                    labels[prop.Name] = GetString(prop.Value);
                 }
             }
 
@@ -74,9 +74,19 @@ public class PortainerClient : IPortainerClient
             }
 
             var service = labels.GetValueOrDefault("com.docker.compose.service");
-            var containerName = container.TryGetProperty("Names", out var names) && names.ValueKind == JsonValueKind.Array
-                ? names[0].GetString()?.TrimStart('/') ?? ""
-                : "";
+            var containerName = "";
+            if (container.TryGetProperty("Names", out var names) && names.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var nameEl in names.EnumerateArray())
+                {
+                    var n = GetString(nameEl).TrimStart('/');
+                    if (!string.IsNullOrEmpty(n))
+                    {
+                        containerName = n;
+                        break;
+                    }
+                }
+            }
 
             if (!container.TryGetProperty("Ports", out var portsEl) || portsEl.ValueKind != JsonValueKind.Array)
             {
@@ -85,11 +95,15 @@ public class PortainerClient : IPortainerClient
 
             foreach (var port in portsEl.EnumerateArray())
             {
-                var privatePort = port.TryGetProperty("PrivatePort", out var pp) ? pp.GetInt32() : 0;
+                var privatePort = GetInt32(port, "PrivatePort");
                 var publicPort = port.TryGetProperty("PublicPort", out var pub) && pub.ValueKind == JsonValueKind.Number
                     ? pub.GetInt32()
                     : (int?)null;
-                var type = port.TryGetProperty("Type", out var t) ? t.GetString() ?? "tcp" : "tcp";
+                var type = GetString(port, "Type");
+                if (string.IsNullOrEmpty(type))
+                {
+                    type = "tcp";
+                }
 
                 if (publicPort is null && privatePort == 0)
                 {
@@ -106,6 +120,74 @@ public class PortainerClient : IPortainerClient
         }
 
         return mappings;
+    }
+
+    // Portainer stack Status 等字段可能是 Number，也可能是 String，需兼容读取。
+    private static string GetString(JsonElement el, string name)
+        => el.TryGetProperty(name, out var value) ? GetString(value) : "";
+
+    private static string GetString(JsonElement value)
+    {
+        switch (value.ValueKind)
+        {
+            case JsonValueKind.String:
+                return value.GetString() ?? "";
+            case JsonValueKind.Number:
+                return value.GetRawText();
+            case JsonValueKind.True:
+                return "true";
+            case JsonValueKind.False:
+                return "false";
+            case JsonValueKind.Null:
+            case JsonValueKind.Undefined:
+                return "";
+            default:
+                return value.GetRawText();
+        }
+    }
+
+    private static int GetInt32(JsonElement el, string name, int defaultValue = 0)
+    {
+        if (!el.TryGetProperty(name, out var value))
+        {
+            return defaultValue;
+        }
+
+        return GetInt32(value, defaultValue);
+    }
+
+    private static int GetInt32(JsonElement value, int defaultValue = 0)
+    {
+        switch (value.ValueKind)
+        {
+            case JsonValueKind.Number:
+                return value.TryGetInt32(out var n) ? n : defaultValue;
+            case JsonValueKind.String:
+                return int.TryParse(value.GetString(), out var parsed) ? parsed : defaultValue;
+            default:
+                return defaultValue;
+        }
+    }
+
+    private static string FormatStackStatus(JsonElement item)
+    {
+        if (!item.TryGetProperty("Status", out var status))
+        {
+            return "";
+        }
+
+        if (status.ValueKind == JsonValueKind.Number && status.TryGetInt32(out var code))
+        {
+            return code switch
+            {
+                1 => "active",
+                2 => "inactive",
+                3 => "removed",
+                _ => code.ToString()
+            };
+        }
+
+        return GetString(status);
     }
 
     private static PortainerConfig Parse(string configJson)
@@ -160,6 +242,7 @@ public class PortainerClient : IPortainerClient
 
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
-        return doc.RootElement.TryGetProperty("jwt", out var jwt) ? jwt.GetString() : null;
+        var token = doc.RootElement.TryGetProperty("jwt", out var jwt) ? GetString(jwt) : "";
+        return string.IsNullOrEmpty(token) ? null : token;
     }
 }
