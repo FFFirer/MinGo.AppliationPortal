@@ -4,12 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - 应用门户</title>
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="manifest" href="~/manifest.webmanifest" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/icons/apple-touch-icon.png" asp-append-version="true" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="门户" />
     <script>
         (function () {
             try {
                 var stored = localStorage.getItem('theme');
                 var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 if (dark) document.documentElement.classList.add('dark');
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute('content', dark ? '#111827' : '#2563eb');
             } catch (e) { /* ignore */ }
         })();
     </script>
@@ -79,6 +87,8 @@
                 btn.setAttribute('title', '主题：' + LABELS[mode]);
                 btn.setAttribute('aria-label', '主题：' + LABELS[mode] + '（点击切换）');
                 btn.setAttribute('data-theme', mode);
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute('content', dark ? '#111827' : '#2563eb');
             }
 
             function nextMode(mode) {
@@ -100,6 +110,13 @@
 
             apply(currentMode());
         })();
+    </script>
+    <script>
+        if ('serviceWorker' in navigator && window.isSecureContext) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').catch(function () { /* ignore */ });
+            });
+        }
     </script>
 </body>
 </html>

@@ -35,9 +35,17 @@
 - **THEN** 首帧即为暗色，不出现浅色底闪现
 
 ### Requirement: 界面可读性
-暗色下卡片、按钮、输入、表格、徽章、弹窗、表单控件与滚动条 SHALL 保持足够对比度与可辨识度。
+暗色下卡片、按钮、输入、表格、徽章、弹窗、表单控件与滚动条 SHALL 保持足够对比度与可辨识度。浏览器主题色（`theme-color`）SHALL 随当前主题模式同步。
 
 #### Scenario: 组件暗色可读
 - **WHEN** 以暗色浏览首页、详情、管理页与弹窗
 - **THEN** 正文、弱文、描边、表面层次清晰可辨
 - **THEN** 原生控件与滚动条随 `color-scheme` 呈暗色
+
+#### Scenario: theme-color 随主题
+- **WHEN** 主题为浅色
+- **THEN** `theme-color` 为 `#2563eb`
+- **WHEN** 主题为暗色
+- **THEN** `theme-color` 为 `#111827`
+- **WHEN** 用户切换主题
+- **THEN** `theme-color` 立即更新
