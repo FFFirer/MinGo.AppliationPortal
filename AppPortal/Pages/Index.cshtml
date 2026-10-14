@@ -27,7 +27,7 @@
                 <a asp-page="/Detail" asp-route-id="@app.Id" class="card-hover p-6 flex flex-col group">
                     @if (!string.IsNullOrEmpty(app.IconUrl))
                     {
-                        <div class="mb-4 w-12 h-12 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <div class="mb-4 w-12 h-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
                             <img src="@app.IconUrl" alt="@app.Name" class="w-10 h-10 object-contain" />
                         </div>
                     }
@@ -36,15 +36,15 @@
                         <div class="app-avatar-md mb-4">@app.Name[..1]</div>
                     }
 
-                    <h3 class="text-base font-semibold text-gray-900 mb-1 truncate group-hover:text-blue-700 transition-colors" title="@app.Name">@app.Name</h3>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors" title="@app.Name">@app.Name</h3>
                     @if (!string.IsNullOrEmpty(app.Description))
                     {
-                        <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">@app.Description</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">@app.Description</p>
                     }
 
                     <div class="mt-auto pt-5 flex items-center justify-between text-xs">
-                        <span class="text-gray-400">@app.Modules.Count(m => m.IsEnabled) 个模块</span>
-                        <span class="text-blue-600 font-medium group-hover:translate-x-0.5 transition-transform">查看详情 <svg class="icon icon-sm" aria-hidden="true"><use href="#i-external"></use></svg></span>
+                        <span class="text-gray-400 dark:text-gray-500">@app.Modules.Count(m => m.IsEnabled) 个模块</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-medium group-hover:translate-x-0.5 transition-transform">查看详情 <svg class="icon icon-sm" aria-hidden="true"><use href="#i-external"></use></svg></span>
                     </div>
                 </a>
             }

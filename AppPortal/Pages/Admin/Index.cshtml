@@ -55,7 +55,7 @@
                                 <div class="flex items-center gap-3">
                                     @if (!string.IsNullOrEmpty(app.IconUrl))
                                     {
-                                        <div class="w-9 h-9 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                                        <div class="w-9 h-9 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
                                             <img src="@app.IconUrl" alt="" class="w-7 h-7 object-contain" />
                                         </div>
                                     }
@@ -64,10 +64,10 @@
                                         <div class="app-avatar-sm">@app.Name[..1]</div>
                                     }
                                     <div class="min-w-0">
-                                        <div class="font-medium text-gray-900 truncate max-w-[220px]">@app.Name</div>
+                                        <div class="font-medium text-gray-900 dark:text-gray-100 truncate max-w-[220px]">@app.Name</div>
                                         @if (!string.IsNullOrEmpty(app.Description))
                                         {
-                                            <div class="text-xs text-gray-400 truncate max-w-[220px]">@app.Description</div>
+                                            <div class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[220px]">@app.Description</div>
                                         }
                                     </div>
                                 </div>

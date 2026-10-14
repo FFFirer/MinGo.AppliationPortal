@@ -4,21 +4,33 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - 应用门户</title>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
 </head>
-<body class="min-h-screen flex flex-col text-slate-800">
-    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 border-b border-gray-200/80">
+<body class="min-h-screen flex flex-col">
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/80 dark:border-gray-700/80">
         <div class="page-shell !py-0">
             <div class="flex justify-between items-center site-header-inner">
                 <a class="flex items-center gap-2.5 group" asp-page="/Index">
                     <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-sm shadow-blue-600/25"><svg class="icon icon-lg" aria-hidden="true"><use href="#i-rocket"></use></svg></span>
-                    <span class="text-lg font-bold tracking-tight text-gray-900 group-hover:text-blue-700 transition-colors">应用门户</span>
+                    <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">应用门户</span>
                 </a>
                 <nav class="flex items-center gap-1">
-                    <a class="px-3.5 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-50/70 transition-colors"
+                    <a class="px-3.5 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-blue-500/10 transition-colors"
                        asp-page="/Index">首页</a>
-                    <a class="px-3.5 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-50/70 transition-colors"
+                    <a class="px-3.5 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-blue-500/10 transition-colors"
                        asp-page="/Admin/Index">管理后台</a>
+                    <button type="button" id="themeToggle" class="theme-toggle" aria-label="切换主题" title="主题：跟随系统">
+                        <svg class="icon" aria-hidden="true"><use href="#i-sun"></use></svg>
+                    </button>
                 </nav>
             </div>
         </div>
@@ -28,8 +40,8 @@
         @RenderBody()
     </main>
 
-    <footer class="mt-10 border-t border-gray-200/80 bg-white/50">
-        <div class="page-shell !py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-400">
+    <footer class="mt-10 border-t border-gray-200/80 dark:border-gray-700/80 bg-white/50 dark:bg-gray-900/40">
+        <div class="page-shell !py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-400 dark:text-gray-500">
             <span>&copy; @DateTime.Now.Year 应用门户</span>
             <span>模块化入口 · 多 Host · 数据源导入</span>
         </div>
@@ -37,5 +49,57 @@
 
     @await RenderSectionAsync("Scripts", required: false)
     @await Html.PartialAsync("_IconSprite")
+    <script>
+        (function () {
+            var root = document.documentElement;
+            var btn = document.getElementById('themeToggle');
+            if (!btn) return;
+
+            var LABELS = { light: '浅色', dark: '暗色', system: '跟随系统' };
+            var ICONS = { light: '#i-sun', dark: '#i-moon', system: '#i-monitor' };
+
+            function currentMode() {
+                try {
+                    var v = localStorage.getItem('theme');
+                    return v === 'light' || v === 'dark' ? v : 'system';
+                } catch (e) { return 'system'; }
+            }
+
+            function isDark(mode) {
+                if (mode === 'dark') return true;
+                if (mode === 'light') return false;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
+            function apply(mode) {
+                var dark = isDark(mode);
+                root.classList.toggle('dark', dark);
+                var use = btn.querySelector('use');
+                if (use) use.setAttribute('href', ICONS[mode] || ICONS.system);
+                btn.setAttribute('title', '主题：' + LABELS[mode]);
+                btn.setAttribute('aria-label', '主题：' + LABELS[mode] + '（点击切换）');
+                btn.setAttribute('data-theme', mode);
+            }
+
+            function nextMode(mode) {
+                return mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system';
+            }
+
+            btn.addEventListener('click', function () {
+                var mode = nextMode(currentMode());
+                try {
+                    if (mode === 'system') localStorage.removeItem('theme');
+                    else localStorage.setItem('theme', mode);
+                } catch (e) { /* ignore */ }
+                apply(mode);
+            });
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+                if (currentMode() === 'system') apply('system');
+            });
+
+            apply(currentMode());
+        })();
+    </script>
 </body>
 </html>

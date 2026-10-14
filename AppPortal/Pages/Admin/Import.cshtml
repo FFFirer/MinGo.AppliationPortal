@@ -31,7 +31,7 @@
     {
         if (Model.Candidates.Count == 0)
         {
-            <div class="card card-pad text-center text-gray-400 py-12">未找到 stack</div>
+            <div class="card card-pad text-center text-gray-400 dark:text-gray-500 py-12">未找到 stack</div>
         }
         else
         {
@@ -42,10 +42,10 @@
                         <div class="flex flex-wrap items-start sm:items-center gap-x-4 gap-y-3">
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <h2 class="font-semibold text-gray-900 break-all">@c.Name</h2>
+                                    <h2 class="font-semibold text-gray-900 dark:text-gray-100 break-all">@c.Name</h2>
                                     <span class="badge-muted">@c.Kind</span>
                                 </div>
-                                <p class="text-xs text-gray-400 mono mt-1.5 break-all">@c.Meta</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mono mt-1.5 break-all">@c.Meta</p>
                             </div>
                             <a class="btn-primary btn-sm shrink-0"
                                asp-page="Import"
@@ -80,7 +80,7 @@
                         <label class="field-label">主机 *</label>
                         @if (Model.Hosts.Count == 0)
                         {
-                            <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200/70 rounded-xl px-3 py-2">
+                            <p class="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-400/25 rounded-xl px-3 py-2">
                                 暂无 Host，请先在 Host 目录中添加。
                             </p>
                         }
@@ -96,15 +96,15 @@
                                     </option>
                                 }
                             </select>
-                            <div class="mt-3 rounded-xl border border-blue-200/70 bg-blue-50/70 px-3 py-2.5">
+                            <div class="mt-3 rounded-xl border border-blue-200/70 dark:border-blue-400/25 bg-blue-50/70 dark:bg-blue-500/10 px-3 py-2.5">
                                 <div class="flex items-center gap-2 mb-2">
-                                    <svg class="icon text-blue-600"><use href="#i-server"></use></svg>
-                                    <span class="text-xs text-blue-700">已选 IP（将全部用于生成地址）</span>
+                                    <svg class="icon text-blue-600 dark:text-blue-400"><use href="#i-server"></use></svg>
+                                    <span class="text-xs text-blue-700 dark:text-blue-300">已选 IP（将全部用于生成地址）</span>
                                 </div>
                                 <div class="flex flex-wrap gap-1.5" id="hostIpPreview">
                                     @foreach (var ip in (Model.Hosts.FirstOrDefault(h => h.Id.ToString() == Model.GenHostId)?.Addresses ?? Model.Hosts.FirstOrDefault()?.Addresses ?? new List<string>()))
                                     {
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-600 text-white text-xs font-medium px-2.5 py-1 mono">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-medium px-2.5 py-1 mono">
                                             <svg class="icon icon-sm opacity-90"><use href="#i-check"></use></svg>
                                             @ip
                                         </span>
@@ -129,17 +129,17 @@
 
             <div class="card card-pad space-y-5">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900">@Model.Draft.Name</h2>
-                    <p class="text-sm text-gray-500 mt-1">@Model.Draft.Description</p>
-                    <p class="text-xs text-gray-400 mono mt-1.5">ExternalId · @Model.Draft.ExternalId</p>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">@Model.Draft.Name</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">@Model.Draft.Description</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mono mt-1.5">ExternalId · @Model.Draft.ExternalId</p>
                 </div>
 
                 @for (var mi = 0; mi < Model.Draft.Modules.Count; mi++)
                 {
                     var mod = Model.Draft.Modules[mi];
-                    <div class="rounded-2xl border border-gray-200/80 bg-gray-50/50 p-4">
+                    <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-gray-50/50 dark:bg-gray-800/50 p-4">
                         <div class="flex items-center justify-between mb-3">
-                            <div class="font-semibold text-gray-900">@mod.Name</div>
+                            <div class="font-semibold text-gray-900 dark:text-gray-100">@mod.Name</div>
                             <span class="badge-muted">service: @mod.SourceService</span>
                         </div>
                         <div class="space-y-2">
@@ -151,7 +151,7 @@
                                            name="Sel_@(mi)_@(ai)"
                                            value="true"
                                            @(addr.Selected ? "checked" : null)
-                                           class="shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500/30" />
+                                           class="shrink-0 rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 focus:ring-blue-500/30" />
                                     <input class="input !py-1.5 !text-sm !min-w-0 !shrink"
                                            name="Url_@(mi)_@(ai)"
                                            value="@addr.Url"
@@ -193,14 +193,14 @@
                 preview.innerHTML = '';
                 if (ips.length === 0) {
                     var empty = document.createElement('span');
-                    empty.className = 'text-xs text-blue-700';
+                    empty.className = 'text-xs text-blue-700 dark:text-blue-300';
                     empty.textContent = '该 Host 暂无 IP';
                     preview.appendChild(empty);
                     return;
                 }
                 ips.forEach(function (ip) {
                     var chip = document.createElement('span');
-                    chip.className = 'inline-flex items-center gap-1 rounded-full bg-blue-600 text-white text-xs font-medium px-2.5 py-1 mono';
+                    chip.className = 'inline-flex items-center gap-1 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-medium px-2.5 py-1 mono';
                     chip.innerHTML = '<svg class="icon icon-sm opacity-90"><use href="#i-check"></use></svg>';
                     chip.appendChild(document.createTextNode(ip));
                     preview.appendChild(chip);

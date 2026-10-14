@@ -14,7 +14,7 @@
         <div class="flex items-start gap-4">
             @if (!string.IsNullOrEmpty(Model.App.IconUrl))
             {
-                <div class="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+                <div class="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700/80 flex items-center justify-center shrink-0">
                     <img src="@Model.App.IconUrl" alt="@Model.App.Name" class="w-11 h-11 object-contain" />
                 </div>
             }
@@ -23,12 +23,12 @@
                 <div class="app-avatar-lg shrink-0">@Model.App.Name[..1]</div>
             }
             <div class="flex-1 min-w-0">
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900">@Model.App.Name</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">@Model.App.Name</h1>
                 @if (!string.IsNullOrEmpty(Model.App.Description))
                 {
-                    <p class="text-gray-500 mt-1.5 leading-relaxed">@Model.App.Description</p>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">@Model.App.Description</p>
                 }
-                <p class="text-xs text-gray-400 mt-2.5">来源：@Model.SourceLabel</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2.5">来源：@Model.SourceLabel</p>
             </div>
         </div>
     </div>
@@ -52,19 +52,19 @@
                             <div class="section-title truncate">@mv.Module.Name</div>
                             @if (!string.IsNullOrEmpty(mv.Module.Description))
                             {
-                                <div class="text-xs text-gray-500 mt-0.5 truncate">@mv.Module.Description</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">@mv.Module.Description</div>
                             }
                         </div>
                         <span class="badge-info shrink-0">@mv.Urls.Count 个地址</span>
                     </div>
-                    <div class="divide-y divide-gray-50">
+                    <div class="divide-y divide-gray-50 dark:divide-gray-800">
                         @foreach (var url in mv.Urls)
                         {
                             <div class="px-5 py-3 flex items-center justify-between gap-3">
                                 <a href="@url"
                                    target="_blank"
                                    rel="noopener noreferrer"
-                                   class="text-sm font-medium text-blue-600 hover:text-blue-800 truncate"
+                                   class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 truncate"
                                    title="@url">
                                     @url
                                 </a>
