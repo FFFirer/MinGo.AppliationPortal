@@ -18,4 +18,7 @@ public class DataSource
     public bool IsEnabled { get; set; } = true;
     public DateTime? LastSyncAt { get; set; }
     public string? LastStatus { get; set; }
+
+    /// <summary>Bound AccessHost ids used as the import host candidate pool. Empty = unbound (fall back to all hosts).</summary>
+    public List<ObjectId> HostIds { get; set; } = new();
 }

@@ -26,6 +26,9 @@ public class ImportModel : PageModel
     public string? Message { get; set; }
     public string? Error { get; set; }
 
+    /// <summary>True when Source.HostIds is non-empty but none resolve to a live Host.</summary>
+    public bool HostBindingStale { get; set; }
+
     [BindProperty]
     public string? SelectedExternalId { get; set; }
 
@@ -33,9 +36,9 @@ public class ImportModel : PageModel
     [BindProperty]
     public string GenScheme { get; set; } = "http";
 
-    /// <summary>Selected AccessHost Id; rewrite expands to every address on that host.</summary>
+    /// <summary>Selected AccessHost Ids; rewrite expands to every address on those hosts.</summary>
     [BindProperty]
-    public string? GenHostId { get; set; }
+    public List<string> GenHostIds { get; set; } = new();
 
     [BindProperty]
     public string? GenPath { get; set; }
@@ -53,8 +56,8 @@ public class ImportModel : PageModel
             return NotFound();
         }
 
-        Hosts = await _hosts.GetAllAsync();
-        GenHostId = ResolveDefaultHostId(Hosts);
+        LoadHostCandidates(await _hosts.GetAllAsync());
+        GenHostIds = Hosts.Select(h => h.Id.ToString()).ToList();
 
         try
         {
@@ -112,10 +115,20 @@ public class ImportModel : PageModel
             return NotFound();
         }
 
-        Hosts = await _hosts.GetAllAsync();
-        if (string.IsNullOrWhiteSpace(GenHostId))
+        LoadHostCandidates(await _hosts.GetAllAsync());
+        if (GenHostIds.Count == 0)
         {
-            GenHostId = ResolveDefaultHostId(Hosts);
+            GenHostIds = Hosts.Select(h => h.Id.ToString()).ToList();
+        }
+        else
+        {
+            // Drop posts that are no longer in the candidate pool (e.g. stale binding).
+            var allowed = Hosts.Select(h => h.Id.ToString()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            GenHostIds = GenHostIds.Where(id => allowed.Contains(id)).ToList();
+            if (GenHostIds.Count == 0)
+            {
+                GenHostIds = Hosts.Select(h => h.Id.ToString()).ToList();
+            }
         }
 
         try
@@ -152,11 +165,29 @@ public class ImportModel : PageModel
         }
     }
 
-    private static string? ResolveDefaultHostId(List<AccessHost> hosts)
+    /// <summary>
+    /// Host pool for import: bound hosts when the binding resolves; otherwise all hosts.
+    /// </summary>
+    private void LoadHostCandidates(List<AccessHost> all)
     {
-        var ordered = hosts.OrderBy(h => h.SortOrder).ThenBy(h => h.Name).ToList();
-        var pick = ordered.FirstOrDefault(h => h.IsDefault) ?? ordered.FirstOrDefault();
-        return pick?.Id.ToString();
+        all = all.OrderBy(h => h.SortOrder).ThenBy(h => h.Name).ToList();
+        HostBindingStale = false;
+
+        if (Source is null || Source.HostIds.Count == 0)
+        {
+            Hosts = all;
+            return;
+        }
+
+        var bound = all.Where(h => Source.HostIds.Contains(h.Id)).ToList();
+        if (bound.Count == 0)
+        {
+            HostBindingStale = true;
+            Hosts = all;
+            return;
+        }
+
+        Hosts = bound;
     }
 
     private void ApplyPostedAddresses()
@@ -186,7 +217,7 @@ public class ImportModel : PageModel
 
     /// <summary>
     /// Rebuild address list from Portainer labels like 8080→80.
-    /// Expands each port to every IP on the selected host (all selected by default).
+    /// Expands each port to the union of IPs on every selected host (all selected by default).
     /// </summary>
     private void RewriteUrlsFromPortLabels()
     {
@@ -195,13 +226,14 @@ public class ImportModel : PageModel
             return;
         }
 
-        var host = Hosts.FirstOrDefault(h => h.Id.ToString() == GenHostId)
-            ?? Hosts.FirstOrDefault(h => string.Equals(h.Name, GenHostId, StringComparison.OrdinalIgnoreCase));
-        var ips = host?.Addresses
+        var selectedIds = new HashSet<string>(GenHostIds, StringComparer.OrdinalIgnoreCase);
+        var ips = Hosts
+            .Where(h => selectedIds.Count == 0 || selectedIds.Contains(h.Id.ToString()) || selectedIds.Contains(h.Name))
+            .SelectMany(h => h.Addresses)
             .Where(a => !string.IsNullOrWhiteSpace(a))
             .Select(a => a.Trim().TrimEnd('/'))
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList() ?? new List<string>();
+            .ToList();
         if (ips.Count == 0)
         {
             return;

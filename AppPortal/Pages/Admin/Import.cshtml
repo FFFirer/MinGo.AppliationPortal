@@ -26,6 +26,10 @@
     {
         <div class="alert-info">@Model.Message</div>
     }
+    @if (Model.HostBindingStale)
+    {
+        <div class="alert-warn">数据源绑定的 Host 已失效，已回落为展示全部 Host。</div>
+    }
 
     @if (Model.Draft is null)
     {
@@ -77,7 +81,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="field-label">主机 *</label>
+                        <label class="field-label">主机 *（可多选）</label>
                         @if (Model.Hosts.Count == 0)
                         {
                             <p class="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-400/25 rounded-xl px-3 py-2">
@@ -86,30 +90,28 @@
                         }
                         else
                         {
-                            <select asp-for="GenHostId" class="select" id="genHostId">
+                            <div class="space-y-2" id="genHostChecks">
                                 @foreach (var h in Model.Hosts.OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
                                 {
-                                    <option value="@h.Id"
-                                            data-ips="@string.Join("|", h.Addresses)"
-                                            selected="@(string.Equals(Model.GenHostId, h.Id.ToString(), StringComparison.OrdinalIgnoreCase) ? "selected" : null)">
-                                        @h.Name@(h.IsDefault ? "（默认）" : "") — @h.Addresses.Count 个 IP
-                                    </option>
+                                    var isChecked = Model.GenHostIds.Contains(h.Id.ToString());
+                                    <label class="flex items-center gap-2.5 rounded-xl border border-gray-200/80 dark:border-gray-700/80 px-3 py-2.5">
+                                        <input type="checkbox"
+                                               name="GenHostIds"
+                                               value="@h.Id"
+                                               @(isChecked ? "checked" : null)
+                                               data-ips="@string.Join("|", h.Addresses)"
+                                               class="gen-host-cb rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 focus:ring-blue-500/30" />
+                                        <span class="text-sm text-gray-800 dark:text-gray-100">@h.Name@(h.IsDefault ? "（默认）" : "")</span>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 mono ml-auto">@h.Addresses.Count 个 IP</span>
+                                    </label>
                                 }
-                            </select>
+                            </div>
                             <div class="mt-3 rounded-xl border border-blue-200/70 dark:border-blue-400/25 bg-blue-50/70 dark:bg-blue-500/10 px-3 py-2.5">
                                 <div class="flex items-center gap-2 mb-2">
                                     <svg class="icon text-blue-600 dark:text-blue-400"><use href="#i-server"></use></svg>
-                                    <span class="text-xs text-blue-700 dark:text-blue-300">已选 IP（将全部用于生成地址）</span>
+                                    <span class="text-xs text-blue-700 dark:text-blue-300">已选 IP（去重后将全部用于生成地址）· <span id="hostIpCount">0</span> 个</span>
                                 </div>
-                                <div class="flex flex-wrap gap-1.5" id="hostIpPreview">
-                                    @foreach (var ip in (Model.Hosts.FirstOrDefault(h => h.Id.ToString() == Model.GenHostId)?.Addresses ?? Model.Hosts.FirstOrDefault()?.Addresses ?? new List<string>()))
-                                    {
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-medium px-2.5 py-1 mono">
-                                            <svg class="icon icon-sm opacity-90"><use href="#i-check"></use></svg>
-                                            @ip
-                                        </span>
-                                    }
-                                </div>
+                                <div class="flex flex-wrap gap-1.5" id="hostIpPreview"></div>
                             </div>
                         }
                     </div>
@@ -182,19 +184,31 @@
 @section Scripts {
     <script>
         (function () {
-            var sel = document.getElementById('genHostId');
+            var checks = document.querySelectorAll('.gen-host-cb');
             var preview = document.getElementById('hostIpPreview');
-            if (!sel || !preview) return;
+            var countEl = document.getElementById('hostIpCount');
+            if (!checks.length || !preview) return;
 
             function syncHostIps() {
-                var opt = sel.options[sel.selectedIndex];
-                var raw = (opt && opt.getAttribute('data-ips')) || '';
-                var ips = raw.split('|').filter(Boolean);
+                var seen = {};
+                var ips = [];
+                checks.forEach(function (cb) {
+                    if (!cb.checked) return;
+                    var raw = cb.getAttribute('data-ips') || '';
+                    raw.split('|').filter(Boolean).forEach(function (ip) {
+                        if (!seen[ip]) {
+                            seen[ip] = true;
+                            ips.push(ip);
+                        }
+                    });
+                });
+
                 preview.innerHTML = '';
+                if (countEl) countEl.textContent = String(ips.length);
                 if (ips.length === 0) {
                     var empty = document.createElement('span');
                     empty.className = 'text-xs text-blue-700 dark:text-blue-300';
-                    empty.textContent = '该 Host 暂无 IP';
+                    empty.textContent = '未选择 Host 或所选 Host 暂无 IP';
                     preview.appendChild(empty);
                     return;
                 }
@@ -207,7 +221,9 @@
                 });
             }
 
-            sel.addEventListener('change', syncHostIps);
+            checks.forEach(function (cb) {
+                cb.addEventListener('change', syncHostIps);
+            });
             syncHostIps();
         })();
     </script>
