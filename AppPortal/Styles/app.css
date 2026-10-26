@@ -97,10 +97,6 @@
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
   }
 
-  .page-shell-narrow {
-    @apply max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
-  }
-
   .page-title {
     @apply text-2xl sm:text-3xl font-bold tracking-tight;
     color: var(--color-ink);
@@ -675,8 +671,7 @@
   }
 
   /* Page padding a bit tighter on very small screens */
-  .page-shell,
-  .page-shell-narrow {
+  .page-shell {
     @apply px-4 py-5 sm:px-6 sm:py-8 lg:px-8;
   }
 }
