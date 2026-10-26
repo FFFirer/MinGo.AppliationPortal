@@ -9,24 +9,27 @@ namespace AppPortal.Pages.Admin;
 public class ImportModel : PageModel
 {
     private readonly IDataSourceService _sources;
+    private readonly IEnvironmentService _environments;
     private readonly IImportService _import;
     private readonly IHostService _hosts;
 
-    public ImportModel(IDataSourceService sources, IImportService import, IHostService hosts)
+    public ImportModel(IDataSourceService sources, IEnvironmentService environments, IImportService import, IHostService hosts)
     {
         _sources = sources;
+        _environments = environments;
         _import = import;
         _hosts = hosts;
     }
 
     public DataSource? Source { get; set; }
+    public PortainerEnvironment? Environment { get; set; }
     public List<ExternalCandidate> Candidates { get; set; } = new();
     public List<AccessHost> Hosts { get; set; } = new();
     public AppDraft? Draft { get; set; }
     public string? Message { get; set; }
     public string? Error { get; set; }
 
-    /// <summary>True when Source.HostIds is non-empty but none resolve to a live Host.</summary>
+    /// <summary>True when Environment.HostIds is non-empty but none resolve to a live Host.</summary>
     public bool HostBindingStale { get; set; }
 
     [BindProperty]
@@ -43,17 +46,16 @@ public class ImportModel : PageModel
     [BindProperty]
     public string? GenPath { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(string sourceId, string? externalId)
+    public async Task<IActionResult> OnGetAsync(string sourceId, string? environmentId, string? externalId)
     {
-        if (!IdParser.TryParse(sourceId, out var oid))
+        if (!await LoadSourceAsync(sourceId))
         {
             return NotFound();
         }
 
-        Source = await _sources.GetByIdAsync(oid);
-        if (Source is null)
+        if (!await LoadEnvironmentAsync(environmentId))
         {
-            return NotFound();
+            return Page();
         }
 
         LoadHostCandidates(await _hosts.GetAllAsync());
@@ -61,7 +63,7 @@ public class ImportModel : PageModel
 
         try
         {
-            Candidates = await _import.ListCandidatesAsync(Source);
+            Candidates = await _import.ListCandidatesAsync(Source!, Environment!.EndpointId);
         }
         catch (Exception ex)
         {
@@ -78,7 +80,7 @@ public class ImportModel : PageModel
             {
                 try
                 {
-                    Draft = await _import.ResolveDraftAsync(Source, candidate);
+                    Draft = await _import.ResolveDraftAsync(Source!, Environment!.EndpointId, candidate);
                     SelectedExternalId = Draft.ExternalId ?? candidate.ExternalId;
                     RewriteUrlsFromPortLabels();
                 }
@@ -92,27 +94,26 @@ public class ImportModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostRewriteAsync(string sourceId)
+    public async Task<IActionResult> OnPostRewriteAsync(string sourceId, string? environmentId)
     {
-        return await LoadDraftAndApplyAsync(sourceId, rewriteOnly: true);
+        return await LoadDraftAndApplyAsync(sourceId, environmentId, rewriteOnly: true);
     }
 
-    public async Task<IActionResult> OnPostImportAsync(string sourceId)
+    public async Task<IActionResult> OnPostImportAsync(string sourceId, string? environmentId)
     {
-        return await LoadDraftAndApplyAsync(sourceId, rewriteOnly: false);
+        return await LoadDraftAndApplyAsync(sourceId, environmentId, rewriteOnly: false);
     }
 
-    private async Task<IActionResult> LoadDraftAndApplyAsync(string sourceId, bool rewriteOnly)
+    private async Task<IActionResult> LoadDraftAndApplyAsync(string sourceId, string? environmentId, bool rewriteOnly)
     {
-        if (!IdParser.TryParse(sourceId, out var oid))
+        if (!await LoadSourceAsync(sourceId))
         {
             return NotFound();
         }
 
-        Source = await _sources.GetByIdAsync(oid);
-        if (Source is null)
+        if (!await LoadEnvironmentAsync(environmentId))
         {
-            return NotFound();
+            return Page();
         }
 
         LoadHostCandidates(await _hosts.GetAllAsync());
@@ -133,16 +134,16 @@ public class ImportModel : PageModel
 
         try
         {
-            Candidates = await _import.ListCandidatesAsync(Source);
+            Candidates = await _import.ListCandidatesAsync(Source!, Environment!.EndpointId);
             var candidate = Candidates.FirstOrDefault(c => c.ExternalId == SelectedExternalId)
                 ?? Candidates.FirstOrDefault(c => string.Equals(c.Name, SelectedExternalId, StringComparison.OrdinalIgnoreCase));
             if (candidate is null)
             {
-                Error = "未选择有效 stack";
+                Error = "未选择有效的 compose project";
                 return Page();
             }
 
-            Draft = await _import.ResolveDraftAsync(Source, candidate);
+            Draft = await _import.ResolveDraftAsync(Source!, Environment!.EndpointId, candidate);
             RewriteUrlsFromPortLabels();
             if (!rewriteOnly)
             {
@@ -154,8 +155,7 @@ public class ImportModel : PageModel
                 return Page();
             }
 
-            var app = await _import.ImportDraftAsync(Source, Draft);
-            await _sources.UpdateAsync(Source);
+            var app = await _import.ImportDraftAsync(Source!, Environment!.Id, Draft);
             return Redirect($"/Detail/{app.Id}");
         }
         catch (Exception ex)
@@ -163,6 +163,59 @@ public class ImportModel : PageModel
             Error = rewriteOnly ? $"更新预览失败：{ex.Message}" : $"导入失败：{ex.Message}";
             return Page();
         }
+    }
+
+    private async Task<bool> LoadSourceAsync(string sourceId)
+    {
+        if (!IdParser.TryParse(sourceId, out var oid))
+        {
+            return false;
+        }
+
+        Source = await _sources.GetByIdAsync(oid);
+        return Source is not null;
+    }
+
+    /// <summary>解析指定 Environment；缺省时回落到该数据源的第一个 Environment。</summary>
+    private async Task<bool> LoadEnvironmentAsync(string? environmentId)
+    {
+        if (Source is null)
+        {
+            return false;
+        }
+
+        if (IdParser.TryParse(environmentId, out var oid))
+        {
+            var env = await _environments.GetByIdAsync(oid);
+            if (env is not null && env.DataSourceId == Source.Id)
+            {
+                Environment = env;
+                return true;
+            }
+        }
+
+        var list = await _environments.GetByDataSourceAsync(Source.Id);
+        if (list.Count == 0)
+        {
+            try
+            {
+                list = await _environments.SyncFromPortainerAsync(Source);
+            }
+            catch (Exception ex)
+            {
+                Error = $"同步 Environment 失败：{ex.Message}";
+                return false;
+            }
+        }
+
+        Environment = list.OrderBy(e => e.EndpointId).FirstOrDefault();
+        if (Environment is null)
+        {
+            Error = "该数据源下暂无 Environment，请先在数据源页同步。";
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -173,13 +226,14 @@ public class ImportModel : PageModel
         all = all.OrderBy(h => h.SortOrder).ThenBy(h => h.Name).ToList();
         HostBindingStale = false;
 
-        if (Source is null || Source.HostIds.Count == 0)
+        var boundIds = Environment?.HostIds ?? new List<ObjectId>();
+        if (boundIds.Count == 0)
         {
             Hosts = all;
             return;
         }
 
-        var bound = all.Where(h => Source.HostIds.Contains(h.Id)).ToList();
+        var bound = all.Where(h => boundIds.Contains(h.Id)).ToList();
         if (bound.Count == 0)
         {
             HostBindingStale = true;

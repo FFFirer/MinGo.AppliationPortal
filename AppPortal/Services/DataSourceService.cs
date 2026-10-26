@@ -15,10 +15,10 @@ public class DataSourceService : IDataSourceService
     }
 
     public Task<List<DataSource>> GetAllAsync()
-        => Task.FromResult(_sources.FindAll().OrderBy(s => s.Name).Select(Normalize).ToList());
+        => Task.FromResult(_sources.FindAll().OrderBy(s => s.Name).ToList());
 
     public Task<DataSource?> GetByIdAsync(ObjectId id)
-        => Task.FromResult(_sources.FindById(id) is { } s ? Normalize(s) : null);
+        => Task.FromResult<DataSource?>(_sources.FindById(id));
 
     public Task CreateAsync(DataSource source)
     {
@@ -36,12 +36,6 @@ public class DataSourceService : IDataSourceService
     {
         _sources.Delete(id);
         return Task.CompletedTask;
-    }
-
-    private static DataSource Normalize(DataSource source)
-    {
-        source.HostIds ??= new List<ObjectId>();
-        return source;
     }
 
     public async Task<bool> TestConnectionAsync(DataSource source)

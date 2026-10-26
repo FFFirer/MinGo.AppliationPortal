@@ -5,7 +5,7 @@
     ViewData["Title"] = "数据源管理";
 }
 
-<div class="page-shell-narrow">
+<div class="page-shell">
     <a class="back-link" asp-page="Index">
         <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
         返回管理列表
@@ -13,12 +13,16 @@
 
     <div class="mb-7">
         <h1 class="page-title">数据源</h1>
-        <p class="page-desc">从 Portainer 等渠道导入应用；后续可扩展其他来源</p>
+        <p class="page-desc">从 Portainer 导入应用；Environment 自动同步，Host 绑定在 Environment 上</p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert-info">@Model.Message</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert-warn">@Model.Error</div>
     }
 
     <div class="table-panel mb-6"><div class="table-scroll">
@@ -27,59 +31,46 @@
                 <tr>
                     <th class="col-name">名称</th>
                     <th class="col-nowrap">类型</th>
-                    <th class="col-nowrap">Host 绑定</th>
-                    <th class="col-nowrap">状态</th>
-                    <th class="col-nowrap col-meta">最近同步</th>
+                    <th class="col-nowrap">Environments</th>
                     <th class="col-actions">操作</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var s in Model.Sources)
                 {
+                    var envs = Model.EnvironmentsBySource.GetValueOrDefault(s.Id) ?? new List<PortainerEnvironment>();
+                    var rowId = $"env-row-{s.Id}";
                     <tr>
                         <td class="col-name">@s.Name</td>
                         <td class="col-nowrap">@s.Type</td>
                         <td class="col-nowrap">
-                            @{
-                                var boundHosts = Model.Hosts.Where(h => s.HostIds.Contains(h.Id)).ToList();
-                            }
-                            @if (s.HostIds.Count == 0)
+                            @if (s.Type != DataSourceType.Portainer)
                             {
-                                <span class="badge-muted">未绑定</span>
+                                <span class="badge-muted">—</span>
                             }
-                            else if (boundHosts.Count == 0)
+                            else if (envs.Count == 0)
                             {
-                                <span class="badge-warn">绑定已失效</span>
+                                <span class="badge-muted">未同步</span>
                             }
                             else
                             {
-                                <span class="badge-info">@boundHosts.Count 个</span>
+                                <span class="badge-info">@envs.Count 个</span>
                             }
                         </td>
-                        <td class="col-nowrap">
-                            @if (s.LastStatus is "connected" or "imported" or "updated")
-                            {
-                                <span class="badge-success">@s.LastStatus</span>
-                            }
-                            else if (s.LastStatus is not null)
-                            {
-                                <span class="badge-warn">@s.LastStatus</span>
-                            }
-                            else
-                            {
-                                <span class="badge-muted">未测试</span>
-                            }
-                        </td>
-                        <td class="col-meta col-nowrap">@(s.LastSyncAt?.ToString("u") ?? "—")</td>
                         <td class="col-actions">
                             <div class="row-actions">
-                                <a class="btn-primary btn-sm" asp-page="Import" asp-route-sourceId="@s.Id"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"></use></svg>导入</a>
-                                <button type="button"
-                                        class="btn-secondary btn-sm btn-edit-hosts"
-                                        data-id="@s.Id"
-                                        data-host-ids="@string.Join(",", s.HostIds)">
-                                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-server"></use></svg>绑定 Host
-                                </button>
+                                @if (s.Type == DataSourceType.Portainer)
+                                {
+                                    <button type="button"
+                                            class="btn-secondary btn-sm btn-toggle-env"
+                                            data-target="@rowId"
+                                            aria-expanded="false">
+                                        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-server"></use></svg>展开
+                                    </button>
+                                    <form method="post" asp-page-handler="SyncEnvironments" asp-route-dataSourceId="@s.Id" class="inline">
+                                        <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>同步</button>
+                                    </form>
+                                }
                                 <form method="post" asp-page-handler="Test" asp-route-id="@s.Id" class="inline">
                                     <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>测试连接</button>
                                 </form>
@@ -89,11 +80,65 @@
                             </div>
                         </td>
                     </tr>
+                    <tr id="@rowId" class="hidden">
+                        <td colspan="4">
+                            <div class="py-2 space-y-2">
+                                @if (s.Type != DataSourceType.Portainer)
+                                {
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">仅 Portainer 数据源支持 Environment。</p>
+                                }
+                                else if (envs.Count == 0)
+                                {
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">尚未同步到 Environment。点击「同步」或在数据源可用时自动拉取。</p>
+                                }
+                                else
+                                {
+                                    foreach (var env in envs)
+                                    {
+                                        var bound = Model.Hosts.Where(h => env.HostIds.Contains(h.Id)).ToList();
+                                        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-gray-200/80 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-800/50 px-3 py-2.5">
+                                            <div class="min-w-0">
+                                                <div class="font-medium text-gray-900 dark:text-gray-100 break-all">@env.Name</div>
+                                                <div class="text-xs text-gray-400 dark:text-gray-500 mono">endpoint #@env.EndpointId · @env.Type</div>
+                                            </div>
+                                            <div class="ml-auto flex flex-wrap items-center gap-2">
+                                                @if (env.HostIds.Count == 0)
+                                                {
+                                                    <span class="badge-muted">Host 未绑定</span>
+                                                }
+                                                else if (bound.Count == 0)
+                                                {
+                                                    <span class="badge-warn">Host 绑定已失效</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge-info">Host @bound.Count 个</span>
+                                                }
+                                                <button type="button"
+                                                        class="btn-secondary btn-sm btn-env-hosts"
+                                                        data-env-id="@env.Id"
+                                                        data-env-name="@env.Name"
+                                                        data-host-ids="@string.Join(",", env.HostIds)">
+                                                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-server"></use></svg>绑定 Host
+                                                </button>
+                                                <a class="btn-primary btn-sm"
+                                                   asp-page="Import"
+                                                   asp-route-sourceId="@s.Id"
+                                                   asp-route-environmentId="@env.Id">
+                                                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-download"></use></svg>导入
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
                 }
                 @if (Model.Sources.Count == 0)
                 {
                     <tr class="empty-row">
-                        <td colspan="6">暂无数据源，请在下方添加</td>
+                        <td colspan="4">暂无数据源，请在下方添加</td>
                     </tr>
                 }
             </tbody>
@@ -123,49 +168,28 @@
                     <label class="field-label">API Key</label>
                     <input asp-for="NewApiKey" class="input" placeholder="ptr_xxx" />
                 </div>
-                <div class="sm:col-span-2">
-                    <label class="field-label">绑定 Host（可选）</label>
-                    @if (Model.Hosts.Count == 0)
-                    {
-                        <p class="field-hint">暂无 Host。可稍后在列表中「绑定 Host」；未绑定时导入将展示全部 Host。</p>
-                    }
-                    else
-                    {
-                        <div class="flex flex-wrap gap-2">
-                            @foreach (var h in Model.Hosts.OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
-                            {
-                                <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200/80 dark:border-gray-700/80 px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
-                                    <input type="checkbox" name="NewHostIds" value="@h.Id"
-                                           class="rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 focus:ring-blue-500/30" />
-                                    <span>@h.Name</span>
-                                    <span class="text-xs text-gray-400 dark:text-gray-500 mono">@h.Addresses.Count IP</span>
-                                </label>
-                            }
-                        </div>
-                        <p class="field-hint mt-2">不选 = 未绑定，导入时展示全部 Host；绑定后导入仅使用所选 Host。</p>
-                    }
-                </div>
             </div>
+            <p class="field-hint">保存并测试连接成功后将自动同步该实例下的所有 Environment；Host 绑定请在 Environment 上维护。</p>
             <button type="submit" class="btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>保存并测试连接</button>
         </form>
     </div>
 </div>
 
-<!-- 绑定 Host 模态框 -->
-<div id="sourceHostModal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
-    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60" data-source-host-close></div>
+<!-- Environment 绑定 Host 模态框 -->
+<div id="envHostModal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60" data-env-host-close></div>
     <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700/80 shrink-0">
-                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">绑定 Host</h2>
-                <button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-source-host-close aria-label="关闭">
+                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">绑定 Host · <span id="envHostTitle" class="font-normal text-gray-500"></span></h2>
+                <button type="button" class="btn-ghost !px-2 !py-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" data-env-host-close aria-label="关闭">
                     <svg class="icon"><use href="#i-x"></use></svg>
                 </button>
             </div>
 
-            <form id="sourceHostForm" method="post" asp-page-handler="UpdateHosts" class="flex flex-col grow min-h-0">
+            <form id="envHostForm" method="post" asp-page-handler="UpdateEnvironmentHosts" class="flex flex-col grow min-h-0">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="EditId" id="sourceEditId" value="" />
+                <input type="hidden" name="EnvId" id="envHostId" value="" />
 
                 <div class="px-5 py-4 overflow-y-auto grow space-y-3">
                     <p class="field-hint">导入时仅使用所选 Host；不选 = 未绑定（展示全部 Host）。</p>
@@ -175,11 +199,11 @@
                     }
                     else
                     {
-                        <div class="space-y-2" id="sourceHostChecks">
+                        <div class="space-y-2" id="envHostChecks">
                             @foreach (var h in Model.Hosts.OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
                             {
                                 <label class="flex items-center gap-2.5 rounded-xl border border-gray-200/80 dark:border-gray-700/80 px-3 py-2.5">
-                                    <input type="checkbox" name="EditHostIds" value="@h.Id"
+                                    <input type="checkbox" name="EnvHostIds" value="@h.Id"
                                            class="rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 focus:ring-blue-500/30" />
                                     <span class="text-sm text-gray-800 dark:text-gray-100">@h.Name</span>
                                     <span class="text-xs text-gray-400 dark:text-gray-500 mono ml-auto">@string.Join(" · ", h.Addresses)</span>
@@ -191,7 +215,7 @@
 
                 <div class="flex items-center gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-700/80 shrink-0 bg-white dark:bg-gray-900 rounded-b-2xl">
                     <button type="submit" class="btn-primary">保存</button>
-                    <button type="button" class="btn-secondary" data-source-host-close>取消</button>
+                    <button type="button" class="btn-secondary" data-env-host-close>取消</button>
                 </div>
             </form>
         </div>
@@ -201,18 +225,32 @@
 @section Scripts {
     <script>
         (function () {
-            var modal = document.getElementById('sourceHostModal');
-            var editId = document.getElementById('sourceEditId');
+            // 展开 / 收起 Environment 区域
+            document.querySelectorAll('.btn-toggle-env').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var row = document.getElementById(btn.getAttribute('data-target'));
+                    if (!row) return;
+                    var hidden = row.classList.toggle('hidden');
+                    btn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+                    btn.lastChild.textContent = hidden ? '展开' : '收起';
+                });
+            });
+
+            // Environment 绑定 Host 模态框
+            var modal = document.getElementById('envHostModal');
+            var idInput = document.getElementById('envHostId');
+            var title = document.getElementById('envHostTitle');
             if (!modal) return;
 
             function lockScroll(lock) {
                 document.body.style.overflow = lock ? 'hidden' : '';
             }
 
-            function openModal(id, hostIds) {
-                editId.value = id || '';
+            function openModal(envId, envName, hostIds) {
+                idInput.value = envId || '';
+                if (title) title.textContent = envName || '';
                 var selected = (hostIds || '').split(',').filter(Boolean);
-                document.querySelectorAll('#sourceHostChecks input[name="EditHostIds"]').forEach(function (cb) {
+                document.querySelectorAll('#envHostChecks input[name="EnvHostIds"]').forEach(function (cb) {
                     cb.checked = selected.indexOf(cb.value) !== -1;
                 });
                 modal.classList.remove('hidden');
@@ -226,13 +264,16 @@
                 lockScroll(false);
             }
 
-            document.querySelectorAll('.btn-edit-hosts').forEach(function (btn) {
+            document.querySelectorAll('.btn-env-hosts').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    openModal(btn.getAttribute('data-id'), btn.getAttribute('data-host-ids'));
+                    openModal(
+                        btn.getAttribute('data-env-id'),
+                        btn.getAttribute('data-env-name'),
+                        btn.getAttribute('data-host-ids'));
                 });
             });
 
-            modal.querySelectorAll('[data-source-host-close]').forEach(function (el) {
+            modal.querySelectorAll('[data-env-host-close]').forEach(function (el) {
                 el.addEventListener('click', closeModal);
             });
 

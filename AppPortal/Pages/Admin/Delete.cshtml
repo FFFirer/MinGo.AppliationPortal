@@ -4,14 +4,15 @@
     ViewData["Title"] = "删除应用";
 }
 
-<div class="max-w-lg mx-auto px-4 sm:px-6 py-8">
+<div class="page-shell">
+    <div class="max-w-lg mx-auto">
     <a class="back-link" asp-page="Index">
         <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
         返回管理列表
     </a>
 
     <div class="alert-warn">
-        仅已禁用的应用可以删除。如需删除请先在列表中禁用该应用。
+        删除后不可恢复。如需临时下线，可先在列表中禁用该应用。
     </div>
 
     <div class="card card-pad">
@@ -61,5 +62,6 @@
                 <a class="btn-secondary" asp-page="Index">取消</a>
             </div>
         </form>
+    </div>
     </div>
 </div>

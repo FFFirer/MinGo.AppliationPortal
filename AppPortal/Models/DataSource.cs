@@ -16,9 +16,7 @@ public class DataSource
     public DataSourceType Type { get; set; } = DataSourceType.Manual;
     public string Config { get; set; } = "{}";
     public bool IsEnabled { get; set; } = true;
-    public DateTime? LastSyncAt { get; set; }
-    public string? LastStatus { get; set; }
 
-    /// <summary>Bound AccessHost ids used as the import host candidate pool. Empty = unbound (fall back to all hosts).</summary>
-    public List<ObjectId> HostIds { get; set; } = new();
+    // Host 绑定与同步状态已下沉到 PortainerEnvironment；
+    // 旧数据中的 HostIds / LastSyncAt / LastStatus 字段由 DataMigration 一次性迁移。
 }

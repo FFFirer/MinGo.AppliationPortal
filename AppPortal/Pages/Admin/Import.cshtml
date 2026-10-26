@@ -1,10 +1,10 @@
-@page "{sourceId}"
+@page "{sourceId}/{environmentId?}"
 @model AppPortal.Pages.Admin.ImportModel
 @{
     ViewData["Title"] = "从数据源导入";
 }
 
-<div class="page-shell-narrow">
+<div class="page-shell">
     <a class="back-link" asp-page="Sources">
         <svg class="icon"><use href="#i-arrow-left"></use></svg>
         返回数据源
@@ -14,7 +14,15 @@
         <h1 class="page-title">导入应用</h1>
         @if (Model.Source is not null)
         {
-            <p class="page-desc">数据源：@Model.Source.Name · <span class="badge-info align-middle">@Model.Source.Type</span></p>
+            <p class="page-desc">
+                数据源：@Model.Source.Name · <span class="badge-info align-middle">@Model.Source.Type</span>
+                @if (Model.Environment is not null)
+                {
+                    <span class="mx-1 text-gray-300 dark:text-gray-600">/</span>
+                    <span>Environment：@Model.Environment.Name</span>
+                    <span class="badge-muted align-middle mono">endpoint #@Model.Environment.EndpointId</span>
+                }
+            </p>
         }
     </div>
 
@@ -28,14 +36,14 @@
     }
     @if (Model.HostBindingStale)
     {
-        <div class="alert-warn">数据源绑定的 Host 已失效，已回落为展示全部 Host。</div>
+        <div class="alert-warn">Environment 绑定的 Host 已失效，已回落为展示全部 Host。</div>
     }
 
     @if (Model.Draft is null)
     {
         if (Model.Candidates.Count == 0)
         {
-            <div class="card card-pad text-center text-gray-400 dark:text-gray-500 py-12">未找到 stack</div>
+            <div class="card card-pad text-center text-gray-400 dark:text-gray-500 py-12">未找到 compose project</div>
         }
         else
         {
@@ -54,6 +62,7 @@
                             <a class="btn-primary btn-sm shrink-0"
                                asp-page="Import"
                                asp-route-sourceId="@Model.Source?.Id"
+                               asp-route-environmentId="@Model.Environment?.Id"
                                asp-route-externalId="@c.ExternalId">
                                 <svg class="icon icon-sm"><use href="#i-download"></use></svg>预览
                             </a>
@@ -122,7 +131,7 @@
                     </div>
                 </div>
                 <div class="mt-3 flex gap-2">
-                    <button type="submit" formaction="@Url.Page("Import", "Rewrite", new { sourceId = Model.Source?.Id })"
+                    <button type="submit" formaction="@Url.Page("Import", "Rewrite", new { sourceId = Model.Source?.Id, environmentId = Model.Environment?.Id })"
                             class="btn-secondary">
                         <svg class="icon"><use href="#i-refresh"></use></svg>按此配置刷新地址
                     </button>
@@ -170,11 +179,11 @@
                 }
 
                 <div class="flex items-center gap-3 pt-1">
-                    <button type="submit" formaction="@Url.Page("Import", "Import", new { sourceId = Model.Source?.Id })"
+                    <button type="submit" formaction="@Url.Page("Import", "Import", new { sourceId = Model.Source?.Id, environmentId = Model.Environment?.Id })"
                             class="btn-primary">
                         <svg class="icon"><use href="#i-download"></use></svg>确认导入
                     </button>
-                    <a class="btn-secondary" asp-page="Import" asp-route-sourceId="@Model.Source?.Id">返回列表</a>
+                    <a class="btn-secondary" asp-page="Import" asp-route-sourceId="@Model.Source?.Id" asp-route-environmentId="@Model.Environment?.Id">返回列表</a>
                 </div>
             </div>
         </form>

@@ -6,9 +6,9 @@ namespace AppPortal.Services;
 public interface IImportService
 {
     IAppSource? ResolveSource(DataSourceType type);
-    Task<List<ExternalCandidate>> ListCandidatesAsync(DataSource source);
-    Task<AppDraft> ResolveDraftAsync(DataSource source, ExternalCandidate candidate);
-    Task<AppEntry> ImportDraftAsync(DataSource source, AppDraft draft);
+    Task<List<ExternalCandidate>> ListCandidatesAsync(DataSource source, int endpointId);
+    Task<AppDraft> ResolveDraftAsync(DataSource source, int endpointId, ExternalCandidate candidate);
+    Task<AppEntry> ImportDraftAsync(DataSource source, ObjectId environmentId, AppDraft draft);
 }
 
 public class ImportService : IImportService
@@ -25,24 +25,26 @@ public class ImportService : IImportService
     public IAppSource? ResolveSource(DataSourceType type)
         => _sources.FirstOrDefault(s => s.Type == type);
 
-    public async Task<List<ExternalCandidate>> ListCandidatesAsync(DataSource source)
+    public async Task<List<ExternalCandidate>> ListCandidatesAsync(DataSource source, int endpointId)
     {
         var impl = ResolveSource(source.Type)
             ?? throw new InvalidOperationException($"未实现的数据源类型 {source.Type}");
-        return await impl.ListCandidatesAsync(source.Config);
+        return await impl.ListCandidatesAsync(source.Config, endpointId);
     }
 
-    public async Task<AppDraft> ResolveDraftAsync(DataSource source, ExternalCandidate candidate)
+    public async Task<AppDraft> ResolveDraftAsync(DataSource source, int endpointId, ExternalCandidate candidate)
     {
         var impl = ResolveSource(source.Type)
             ?? throw new InvalidOperationException($"未实现的数据源类型 {source.Type}");
-        return await impl.ResolveAsync(source.Config, candidate);
+        return await impl.ResolveAsync(source.Config, endpointId, candidate);
     }
 
-    public async Task<AppEntry> ImportDraftAsync(DataSource source, AppDraft draft)
+    public async Task<AppEntry> ImportDraftAsync(DataSource source, ObjectId environmentId, AppDraft draft)
     {
         var existing = (await _apps.GetAllAppsAsync())
-            .FirstOrDefault(a => a.SourceId == source.Id && a.ExternalId == draft.ExternalId);
+            .FirstOrDefault(a => a.SourceId == source.Id
+                              && a.EnvironmentId == environmentId
+                              && a.ExternalId == draft.ExternalId);
 
         var modules = draft.Modules
             .Select((m, index) => new AppModule
@@ -68,13 +70,12 @@ public class ImportService : IImportService
                 Description = draft.Description,
                 Modules = modules,
                 SourceId = source.Id,
+                EnvironmentId = environmentId,
                 ExternalId = draft.ExternalId,
                 SyncHint = draft.SyncHint,
                 IsEnabled = true
             };
             await _apps.CreateAsync(app);
-            source.LastSyncAt = DateTime.UtcNow;
-            source.LastStatus = "imported";
             return app;
         }
 
@@ -86,8 +87,6 @@ public class ImportService : IImportService
         existing.Modules = modules;
         existing.SyncHint = draft.SyncHint;
         await _apps.UpdateAsync(existing);
-        source.LastSyncAt = DateTime.UtcNow;
-        source.LastStatus = "updated";
         return existing;
     }
 }

@@ -69,6 +69,7 @@ public class EditModel : PageModel
         if (existing is not null)
         {
             entry.SourceId = existing.SourceId;
+            entry.EnvironmentId = existing.EnvironmentId;
             entry.ExternalId = existing.ExternalId;
             entry.SyncHint = existing.SyncHint;
             entry.CreatedAt = existing.CreatedAt;

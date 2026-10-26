@@ -100,10 +100,7 @@
                                         <button type="submit" class="btn-secondary btn-sm">@(app.IsEnabled ? "禁用" : "启用")</button>
                                     </form>
                                     <a class="btn-secondary btn-sm" asp-page="Edit" asp-route-id="@app.Id"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-pencil"></use></svg>编辑</a>
-                                    @if (!app.IsEnabled)
-                                    {
-                                        <a class="btn-danger btn-sm" asp-page="Delete" asp-route-id="@app.Id">删除</a>
-                                    }
+                                    <a class="btn-danger btn-sm" asp-page="Delete" asp-route-id="@app.Id">删除</a>
                                 </div>
                             </td>
                         </tr>

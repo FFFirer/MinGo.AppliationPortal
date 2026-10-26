@@ -11,6 +11,11 @@ public class AppEntry
     public List<AppModule> Modules { get; set; } = new();
     public List<HostRef> HostRefs { get; set; } = new();
     public ObjectId? SourceId { get; set; }
+
+    /// <summary>导入来源的 PortainerEnvironment；null = 手工创建。</summary>
+    public ObjectId? EnvironmentId { get; set; }
+
+    /// <summary>外部标识：Portainer 维度为 compose project name。</summary>
     public string? ExternalId { get; set; }
     public string? SyncHint { get; set; }
     public bool IsEnabled { get; set; } = true;

@@ -20,6 +20,84 @@ public class PortainerClient : IPortainerClient
         return response.IsSuccessStatusCode;
     }
 
+    // ------------------------------------------------------------------
+    // Project 维度（业务导入使用）
+    // ------------------------------------------------------------------
+
+    public async Task<List<PortainerEndpointInfo>> ListEndpointsAsync(string configJson)
+    {
+        var config = Parse(configJson);
+        var client = CreateClient(config);
+        using var response = await client.GetAsync("/api/endpoints");
+        response.EnsureSuccessStatusCode();
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+
+        var result = new List<PortainerEndpointInfo>();
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            return result;
+        }
+
+        foreach (var item in doc.RootElement.EnumerateArray())
+        {
+            result.Add(new PortainerEndpointInfo(
+                GetInt32(item, "Id"),
+                GetString(item, "Name"),
+                MapEndpointType(GetInt32(item, "Type"))));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 列出指定 Environment 下的 compose projects：查全部容器，按
+    /// com.docker.compose.project 分组，Portainer stack 与原生 compose 均覆盖。
+    /// </summary>
+    public async Task<List<PortainerProjectInfo>> ListProjectsAsync(string configJson, int endpointId)
+    {
+        var containers = await FetchContainersAsync(configJson, endpointId);
+
+        return containers
+            .Where(c => !string.IsNullOrEmpty(c.Project))
+            .GroupBy(c => c.Project, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var total = g.Count();
+                var running = g.Count(c => string.Equals(c.State, "running", StringComparison.OrdinalIgnoreCase));
+                return new PortainerProjectInfo(g.Key, endpointId, $"{running}/{total} running");
+            })
+            .ToList();
+    }
+
+    public async Task<List<PortainerPortMapping>> GetProjectPortsAsync(string configJson, int endpointId, string projectName)
+    {
+        var containers = await FetchContainersAsync(configJson, endpointId);
+        var mappings = new List<PortainerPortMapping>();
+
+        foreach (var container in containers.Where(c =>
+                     string.Equals(c.Project, projectName, StringComparison.OrdinalIgnoreCase)))
+        {
+            var serviceName = string.IsNullOrEmpty(container.Service) ? container.ContainerName : container.Service;
+            foreach (var port in container.Ports)
+            {
+                mappings.Add(new PortainerPortMapping(
+                    container.ContainerName,
+                    serviceName,
+                    port.PublicPort,
+                    port.PrivatePort,
+                    port.Type));
+            }
+        }
+
+        return mappings;
+    }
+
+    // ------------------------------------------------------------------
+    // Stack 维度（底层封装保留，供存量迁移使用）
+    // ------------------------------------------------------------------
+
     public async Task<List<PortainerStackInfo>> ListStacksAsync(string configJson)
     {
         var config = Parse(configJson);
@@ -44,17 +122,63 @@ public class PortainerClient : IPortainerClient
 
     public async Task<List<PortainerPortMapping>> GetStackPortsAsync(string configJson, PortainerStackInfo stack)
     {
+        var containers = await FetchContainersAsync(configJson, stack.EndpointId);
+        var mappings = new List<PortainerPortMapping>();
+
+        foreach (var container in containers)
+        {
+            // 历史行为：无 compose project 标签或与 stack 同名均纳入
+            if (!string.IsNullOrEmpty(container.Project) &&
+                !string.Equals(container.Project, stack.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var serviceName = string.IsNullOrEmpty(container.Service) ? container.ContainerName : container.Service;
+            foreach (var port in container.Ports)
+            {
+                mappings.Add(new PortainerPortMapping(
+                    container.ContainerName,
+                    serviceName,
+                    port.PublicPort,
+                    port.PrivatePort,
+                    port.Type));
+            }
+        }
+
+        return mappings;
+    }
+
+    // ------------------------------------------------------------------
+    // 内部辅助
+    // ------------------------------------------------------------------
+
+    private sealed record ContainerPort(int? PublicPort, int PrivatePort, string Type);
+
+    private sealed record ContainerInfo(
+        string Project,
+        string Service,
+        string ContainerName,
+        string State,
+        List<ContainerPort> Ports);
+
+    private async Task<List<ContainerInfo>> FetchContainersAsync(string configJson, int endpointId)
+    {
         var config = Parse(configJson);
         var client = CreateClient(config);
 
-        // Prefer runtime containers filtered by compose project label
-        var url = $"/api/endpoints/{stack.EndpointId}/docker/containers/json?all=true";
+        var url = $"/api/endpoints/{endpointId}/docker/containers/json?all=true";
         using var response = await client.GetAsync(url);
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
 
-        var mappings = new List<PortainerPortMapping>();
+        var result = new List<ContainerInfo>();
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            return result;
+        }
+
         foreach (var container in doc.RootElement.EnumerateArray())
         {
             var labels = new Dictionary<string, string>();
@@ -66,14 +190,6 @@ public class PortainerClient : IPortainerClient
                 }
             }
 
-            var project = labels.GetValueOrDefault("com.docker.compose.project");
-            if (!string.IsNullOrEmpty(project) &&
-                !string.Equals(project, stack.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var service = labels.GetValueOrDefault("com.docker.compose.service");
             var containerName = "";
             if (container.TryGetProperty("Names", out var names) && names.ValueKind == JsonValueKind.Array)
             {
@@ -88,39 +204,50 @@ public class PortainerClient : IPortainerClient
                 }
             }
 
-            if (!container.TryGetProperty("Ports", out var portsEl) || portsEl.ValueKind != JsonValueKind.Array)
+            var ports = new List<ContainerPort>();
+            if (container.TryGetProperty("Ports", out var portsEl) && portsEl.ValueKind == JsonValueKind.Array)
             {
-                continue;
+                foreach (var port in portsEl.EnumerateArray())
+                {
+                    var privatePort = GetInt32(port, "PrivatePort");
+                    var publicPort = port.TryGetProperty("PublicPort", out var pub) && pub.ValueKind == JsonValueKind.Number
+                        ? pub.GetInt32()
+                        : (int?)null;
+                    var type = GetString(port, "Type");
+                    if (string.IsNullOrEmpty(type))
+                    {
+                        type = "tcp";
+                    }
+
+                    if (publicPort is null && privatePort == 0)
+                    {
+                        continue;
+                    }
+
+                    ports.Add(new ContainerPort(publicPort, privatePort == 0 ? publicPort ?? 0 : privatePort, type));
+                }
             }
 
-            foreach (var port in portsEl.EnumerateArray())
-            {
-                var privatePort = GetInt32(port, "PrivatePort");
-                var publicPort = port.TryGetProperty("PublicPort", out var pub) && pub.ValueKind == JsonValueKind.Number
-                    ? pub.GetInt32()
-                    : (int?)null;
-                var type = GetString(port, "Type");
-                if (string.IsNullOrEmpty(type))
-                {
-                    type = "tcp";
-                }
-
-                if (publicPort is null && privatePort == 0)
-                {
-                    continue;
-                }
-
-                mappings.Add(new PortainerPortMapping(
-                    containerName,
-                    string.IsNullOrEmpty(service) ? containerName : service,
-                    publicPort,
-                    privatePort == 0 ? publicPort ?? 0 : privatePort,
-                    type));
-            }
+            result.Add(new ContainerInfo(
+                labels.GetValueOrDefault("com.docker.compose.project", ""),
+                labels.GetValueOrDefault("com.docker.compose.service", ""),
+                containerName,
+                GetString(container, "State"),
+                ports));
         }
 
-        return mappings;
+        return result;
     }
+
+    private static string MapEndpointType(int type) => type switch
+    {
+        1 => "Docker",
+        2 => "Agent",
+        3 => "Azure",
+        4 => "Edge Agent",
+        5 => "Kubernetes",
+        _ => $"Type {type}"
+    };
 
     // Portainer stack Status 等字段可能是 Number，也可能是 String，需兼容读取。
     private static string GetString(JsonElement el, string name)

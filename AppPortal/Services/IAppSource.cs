@@ -41,6 +41,9 @@ public interface IAppSource
 {
     DataSourceType Type { get; }
     Task<bool> TestConnectionAsync(string configJson);
-    Task<List<ExternalCandidate>> ListCandidatesAsync(string configJson);
-    Task<AppDraft> ResolveAsync(string configJson, ExternalCandidate candidate);
+
+    /// <summary>列出候选；endpointId 标识 Portainer Environment（其他来源可忽略）。</summary>
+    Task<List<ExternalCandidate>> ListCandidatesAsync(string configJson, int endpointId);
+
+    Task<AppDraft> ResolveAsync(string configJson, int endpointId, ExternalCandidate candidate);
 }
