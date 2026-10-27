@@ -68,11 +68,21 @@
                                             data-addresses="@string.Join("\n", h.Addresses)">
                                         <svg class="icon icon-sm"><use href="#i-pencil"></use></svg>编辑
                                     </button>
-                                    <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
-                                        <button type="submit" class="btn-danger btn-sm">
-                                            <svg class="icon icon-sm"><use href="#i-trash"></use></svg>删除
+                                    <div class="row-actions-overflow">
+                                        <button type="button"
+                                                class="btn-secondary btn-sm btn-overflow-toggle"
+                                                aria-expanded="false"
+                                                aria-label="更多操作">
+                                            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-more"></use></svg>
                                         </button>
-                                    </form>
+                                        <div class="row-actions-menu">
+                                            <form method="post" asp-page-handler="Delete" asp-route-id="@h.Id" class="inline">
+                                                <button type="submit" class="btn-danger btn-sm">
+                                                    <svg class="icon icon-sm"><use href="#i-trash"></use></svg>删除
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -192,6 +202,34 @@
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
                     closeModal();
+                }
+            });
+
+            // 移动端操作列下拉菜单
+            document.querySelectorAll('.btn-overflow-toggle').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var menu = btn.parentElement.querySelector('.row-actions-menu');
+                    if (!menu) return;
+                    var isOpen = menu.classList.toggle('open');
+                    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    document.querySelectorAll('.row-actions-menu.open').forEach(function (m) {
+                        if (m !== menu) {
+                            m.classList.remove('open');
+                            var otherBtn = m.parentElement.querySelector('.btn-overflow-toggle');
+                            if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.row-actions-overflow')) {
+                    document.querySelectorAll('.row-actions-menu.open').forEach(function (m) {
+                        m.classList.remove('open');
+                        var btn = m.parentElement.querySelector('.btn-overflow-toggle');
+                        if (btn) btn.setAttribute('aria-expanded', 'false');
+                    });
                 }
             });
         })();

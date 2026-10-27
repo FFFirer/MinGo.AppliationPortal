@@ -67,16 +67,29 @@
                                             aria-expanded="false">
                                         <svg class="icon icon-sm" aria-hidden="true"><use href="#i-server"></use></svg>展开
                                     </button>
-                                    <form method="post" asp-page-handler="SyncEnvironments" asp-route-dataSourceId="@s.Id" class="inline">
-                                        <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>同步</button>
-                                    </form>
                                 }
-                                <form method="post" asp-page-handler="Test" asp-route-id="@s.Id" class="inline">
-                                    <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>测试连接</button>
-                                </form>
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@s.Id" class="inline">
-                                    <button type="submit" class="btn-danger btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>删除</button>
-                                </form>
+                                <div class="row-actions-overflow">
+                                    <button type="button"
+                                            class="btn-secondary btn-sm btn-overflow-toggle"
+                                            aria-expanded="false"
+                                            aria-label="更多操作">
+                                        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-more"></use></svg>
+                                    </button>
+                                    <div class="row-actions-menu">
+                                        @if (s.Type == DataSourceType.Portainer)
+                                        {
+                                            <form method="post" asp-page-handler="SyncEnvironments" asp-route-dataSourceId="@s.Id" class="inline">
+                                                <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>同步</button>
+                                            </form>
+                                        }
+                                        <form method="post" asp-page-handler="Test" asp-route-id="@s.Id" class="inline">
+                                            <button type="submit" class="btn-secondary btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"></use></svg>测试连接</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@s.Id" class="inline">
+                                            <button type="submit" class="btn-danger btn-sm"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>删除</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -234,6 +247,36 @@
                     btn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
                     btn.lastChild.textContent = hidden ? '展开' : '收起';
                 });
+            });
+
+            // 移动端操作列下拉菜单
+            document.querySelectorAll('.btn-overflow-toggle').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var menu = btn.parentElement.querySelector('.row-actions-menu');
+                    if (!menu) return;
+                    var isOpen = menu.classList.toggle('open');
+                    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    // 关闭其他已打开的菜单
+                    document.querySelectorAll('.row-actions-menu.open').forEach(function (m) {
+                        if (m !== menu) {
+                            m.classList.remove('open');
+                            var otherBtn = m.parentElement.querySelector('.btn-overflow-toggle');
+                            if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                });
+            });
+
+            // 点击外部关闭下拉菜单
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.row-actions-overflow')) {
+                    document.querySelectorAll('.row-actions-menu.open').forEach(function (m) {
+                        m.classList.remove('open');
+                        var btn = m.parentElement.querySelector('.btn-overflow-toggle');
+                        if (btn) btn.setAttribute('aria-expanded', 'false');
+                    });
+                }
             });
 
             // Environment 绑定 Host 模态框
