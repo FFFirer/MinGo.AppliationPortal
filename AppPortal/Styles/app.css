@@ -701,6 +701,16 @@
     padding-right: 1.125rem;
   }
 
+  /* Mobile: icon-only action buttons to compress sticky column */
+  .data-table .row-actions {
+    @apply gap-1;
+  }
+
+  .data-table .row-actions .btn-sm {
+    @apply !px-1.5 !min-w-[32px] !min-h-[32px] !justify-center;
+    font-size: 0;
+  }
+
   /* Card lists: slightly tighter gap */
   .grid {
     /* keep default */
