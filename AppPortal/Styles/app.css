@@ -705,7 +705,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   .data-table thead th {
     @apply !text-left;
     white-space: nowrap;
@@ -730,7 +730,7 @@
     padding-right: 1.125rem;
   }
 
-  /* Mobile: icon-only action buttons to compress sticky column */
+  /* Mobile/tablet: icon-only action buttons to compress sticky column */
   .data-table .row-actions {
     @apply gap-1;
   }
@@ -753,21 +753,37 @@
     font-size: 1rem;
   }
 
+  .data-table .btn-overflow-toggle[aria-expanded="true"] {
+    background: var(--color-surface-3);
+    color: var(--color-ink);
+  }
+
   .data-table .row-actions-menu {
     display: none;
     position: absolute;
     right: 0;
-    top: 100%;
-    z-index: 50;
-    margin-top: 4px;
+    top: calc(100% + 4px);
+    z-index: 100;
     padding: 6px;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    box-shadow: 0 8px 24px -8px var(--color-shadow);
+    box-shadow: 0 12px 32px -12px color-mix(in srgb, var(--color-shadow) 50%, transparent);
     flex-direction: column;
     gap: 4px;
-    min-width: 140px;
+    min-width: 160px;
+    animation: menuFadeIn 150ms ease-out;
+  }
+
+  @keyframes menuFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .data-table .row-actions-menu.open {
