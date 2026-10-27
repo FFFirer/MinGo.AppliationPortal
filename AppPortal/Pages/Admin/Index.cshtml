@@ -125,32 +125,66 @@
 @section Scripts {
     <script>
         (function () {
-            // 移动端操作列下拉菜单
+            // 移动端操作列下拉菜单（移到 body 避免被表格 overflow 裁切）
+            var activeMenu = null;
+            var activeBtn = null;
+
+            function positionMenu(menu, btn) {
+                var rect = btn.getBoundingClientRect();
+                menu.style.position = 'fixed';
+                menu.style.top = (rect.bottom + 4) + 'px';
+                menu.style.right = (window.innerWidth - rect.right) + 'px';
+                menu.style.left = 'auto';
+                menu.style.zIndex = '9999';
+            }
+
+            function openMenu(btn) {
+                closeMenu();
+                var menu = btn.parentElement.querySelector('.row-actions-menu');
+                if (!menu) return;
+                btn.parentElement.removeChild(menu);
+                document.body.appendChild(menu);
+                positionMenu(menu, btn);
+                menu.classList.add('open');
+                btn.setAttribute('aria-expanded', 'true');
+                activeMenu = menu;
+                activeBtn = btn;
+            }
+
+            function closeMenu() {
+                if (!activeMenu || !activeBtn) return;
+                activeMenu.classList.remove('open');
+                activeMenu.style.position = '';
+                activeMenu.style.top = '';
+                activeMenu.style.right = '';
+                activeMenu.style.left = '';
+                activeMenu.style.zIndex = '';
+                activeBtn.parentElement.appendChild(activeMenu);
+                activeBtn.setAttribute('aria-expanded', 'false');
+                activeMenu = null;
+                activeBtn = null;
+            }
+
             document.querySelectorAll('.btn-overflow-toggle').forEach(function (btn) {
                 btn.addEventListener('click', function (e) {
                     e.stopPropagation();
-                    var menu = btn.parentElement.querySelector('.row-actions-menu');
-                    if (!menu) return;
-                    var isOpen = menu.classList.toggle('open');
-                    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                    document.querySelectorAll('.row-actions-menu.open').forEach(function (m) {
-                        if (m !== menu) {
-                            m.classList.remove('open');
-                            var otherBtn = m.parentElement.querySelector('.btn-overflow-toggle');
-                            if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
-                        }
-                    });
+                    if (activeBtn === btn) {
+                        closeMenu();
+                    } else {
+                        openMenu(btn);
+                    }
                 });
             });
 
             document.addEventListener('click', function (e) {
-                if (!e.target.closest('.row-actions-overflow')) {
-                    document.querySelectorAll('.row-actions-menu.open').forEach(function (m) {
-                        m.classList.remove('open');
-                        var btn = m.parentElement.querySelector('.btn-overflow-toggle');
-                        if (btn) btn.setAttribute('aria-expanded', 'false');
-                    });
+                if (activeMenu && !e.target.closest('.row-actions-menu') && !e.target.closest('.btn-overflow-toggle')) {
+                    closeMenu();
                 }
+            });
+
+            window.addEventListener('scroll', closeMenu, true);
+            window.addEventListener('resize', function () {
+                if (activeMenu && activeBtn) positionMenu(activeMenu, activeBtn);
             });
         })();
     </script>
