@@ -195,6 +195,22 @@
     @apply !px-2.5 !py-1.5 !text-xs !rounded-lg !leading-none !gap-1.5;
   }
 
+  /* Button group: inline-flex container for visually connected buttons */
+  .btn-group {
+    @apply inline-flex items-center;
+  }
+
+  .btn-group > :not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .btn-group > :not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: -1px;
+  }
+
   .card {
     @apply rounded-2xl shadow-sm;
     background: var(--color-surface);
@@ -361,12 +377,16 @@
   }
 
   .data-table .row-actions {
-    @apply inline-flex items-center justify-end gap-1.5 flex-wrap;
+    @apply inline-flex items-center justify-end flex-wrap;
+  }
+
+  .data-table .row-actions:not(.btn-group) {
+    @apply gap-1.5;
   }
 
   /* Overflow dropdown: desktop shows all buttons inline */
   .data-table .row-actions-overflow {
-    @apply inline-flex items-center gap-1.5;
+    @apply inline-flex items-center;
   }
 
   .data-table .row-actions-menu {
