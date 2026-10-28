@@ -1,3 +1,4 @@
+/* v1.4.5 - fix: remove .data-table prefix from row-actions-menu selectors */
 @import "tailwindcss";
 
 @source "../Pages";
@@ -389,7 +390,7 @@
     @apply inline-flex items-center;
   }
 
-  .data-table .row-actions-menu {
+  .row-actions-menu {
     display: none;
   }
 
@@ -758,8 +759,8 @@
     color: var(--color-ink);
   }
 
-  /* Dropdown menu: base styles (JS handles positioning via fixed) */
-  .data-table .row-actions-menu {
+  /* Dropdown menu: base styles (JS moves to body, so no .data-table prefix) */
+  .row-actions-menu {
     display: none;
     padding: 6px;
     background: var(--color-surface);
@@ -771,17 +772,17 @@
     min-width: 160px;
   }
 
-  .data-table .row-actions-menu.open {
+  .row-actions-menu.open {
     display: flex;
   }
 
-  .data-table .row-actions-menu .inline,
-  .data-table .row-actions-menu a,
-  .data-table .row-actions-menu form {
+  .row-actions-menu .inline,
+  .row-actions-menu a,
+  .row-actions-menu form {
     width: 100%;
   }
 
-  .data-table .row-actions-menu .btn-sm {
+  .row-actions-menu .btn-sm {
     @apply w-full !justify-start !text-left !px-3 !py-2;
     font-size: 0.875rem;
   }

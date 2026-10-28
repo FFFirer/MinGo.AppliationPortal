@@ -21,7 +21,7 @@ RUN dotnet restore
 # 复制全部项目文件
 COPY AppPortal/ .
 
-# 从前端构建阶段复制预编译的 CSS
+# 从前端构建阶段复制预编译的 CSS（在 publish 之前，确保 MapStaticAssets 能正确哈希）
 COPY --from=frontend-build /app/wwwroot/css/app.css ./wwwroot/css/app.css
 
 # 发布 Web 站点
