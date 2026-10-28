@@ -111,8 +111,8 @@ def make_favicon(base_size=512, path="../favicon.ico"):
 
 
 if __name__ == "__main__":
-    make_icon(192, rocket_scale=0.30, path="icon-192.png")
-    make_icon(512, rocket_scale=0.30, path="icon-512.png")
-    make_icon(180, rocket_scale=0.30, corner_radius=int(180 * 0.18), path="apple-touch-icon.png")
+    make_icon(192, rocket_scale=0.45, path="icon-192.png")
+    make_icon(512, rocket_scale=0.45, path="icon-512.png")
+    make_icon(180, rocket_scale=0.45, corner_radius=int(180 * 0.18), path="apple-touch-icon.png")
     make_maskable(512)
     make_favicon()
