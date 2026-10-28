@@ -95,8 +95,24 @@ def make_maskable(size, path="icon-maskable-512.png"):
     print(f"wrote {out} ({size}x{size}, maskable safe zone)")
 
 
+def make_favicon(base_size=512, path="../favicon.ico"):
+    """Generate favicon.ico (16×16 + 32×32 + 48×48) from the same rocket art."""
+    img = gradient(base_size).convert("RGBA")
+    mask = rounded_mask(base_size, int(base_size * 0.22))
+    canvas = Image.new("RGBA", (base_size, base_size), (0, 0, 0, 0))
+    canvas.paste(img, (0, 0), mask)
+    draw_rocket(canvas, base_size / 2, base_size / 2, base_size * 0.30)
+
+    out = os.path.join(os.path.dirname(__file__), path)
+    ico_sizes = [(16, 16), (32, 32), (48, 48)]
+    frames = [canvas.resize(s, Image.LANCZOS) for s in ico_sizes]
+    frames[0].save(out, format="ICO", sizes=ico_sizes, append_images=frames[1:])
+    print(f"wrote {out} (16/32/48)")
+
+
 if __name__ == "__main__":
     make_icon(192, rocket_scale=0.30, path="icon-192.png")
     make_icon(512, rocket_scale=0.30, path="icon-512.png")
     make_icon(180, rocket_scale=0.30, corner_radius=int(180 * 0.18), path="apple-touch-icon.png")
     make_maskable(512)
+    make_favicon()
