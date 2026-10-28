@@ -87,7 +87,7 @@ async function makeIcon(size, rocketScale, cornerRadius, outPath) {
 async function makeFavicon() {
   const size = 512;
   const cornerRadius = Math.floor(size * 0.22);
-  const rocketSize = Math.floor(size * 0.55);
+  const rocketSize = Math.floor(size * 0.50);
   const rocket = await renderRocket(rocketSize);
   const offset = Math.floor((size - rocketSize) / 2);
 
@@ -128,12 +128,12 @@ async function makeFavicon() {
 async function main() {
   fs.mkdirSync(OUT, { recursive: true });
 
-  await makeIcon(192, 0.70, null, path.join(OUT, 'icon-192.png'));
-  await makeIcon(512, 0.70, null, path.join(OUT, 'icon-512.png'));
-  await makeIcon(180, 0.70, Math.floor(180 * 0.18), path.join(OUT, 'apple-touch-icon.png'));
+  await makeIcon(192, 0.60, null, path.join(OUT, 'icon-192.png'));
+  await makeIcon(512, 0.60, null, path.join(OUT, 'icon-512.png'));
+  await makeIcon(180, 0.60, Math.floor(180 * 0.18), path.join(OUT, 'apple-touch-icon.png'));
 
   // Maskable: full bleed, no rounded corners
-  const rocketSize = Math.floor(512 * 0.55);
+  const rocketSize = Math.floor(512 * 0.50);
   const rocket = await renderRocket(rocketSize);
   const offset = Math.floor((512 - rocketSize) / 2);
 
