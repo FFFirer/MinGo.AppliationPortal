@@ -33,40 +33,38 @@ def rounded_mask(size, radius):
 
 
 def draw_rocket(img, cx, cy, scale, color=WHITE):
-    """Lucide-style rocket pointing up-right at 45°, matching #i-rocket SVG sprite."""
+    """Lucide-style outlined rocket pointing up-right at 45°, matching #i-rocket SVG sprite."""
     d = ImageDraw.Draw(img)
     s = scale
+    line_width = max(3, int(s * 0.06))
 
     def P(x, y):
         return (cx + x * s, cy + y * s)
 
-    # Main body: elongated shape pointing toward upper-right (45°)
+    # Main body outline (pointing upper-right)
     body = [
-        P(0.55, -0.62),   # nose tip (upper-right)
+        P(0.55, -0.62),   # nose tip
         P(0.78, -0.18),   # right shoulder
-        P(0.38, 0.42),    # tail (lower-left)
+        P(0.38, 0.42),    # tail
         P(-0.18, -0.08),  # left shoulder
     ]
-    d.polygon(body, fill=color)
+    d.polygon(body, outline=color, fill=None, width=line_width)
 
-    # Left fin (lower-left side)
+    # Left fin
     fin_l = [P(-0.18, -0.08), P(0.12, 0.22), P(-0.28, 0.32), P(-0.42, 0.05)]
-    d.polygon(fin_l, fill=color)
+    d.polygon(fin_l, outline=color, fill=None, width=line_width)
 
-    # Right fin (lower-right side)
+    # Right fin
     fin_r = [P(0.38, 0.42), P(0.28, 0.72), P(-0.02, 0.42), P(0.12, 0.22)]
-    d.polygon(fin_r, fill=color)
+    d.polygon(fin_r, outline=color, fill=None, width=line_width)
 
-    # Exhaust flame (bottom-left)
+    # Exhaust flame
     flame = [P(-0.28, 0.32), P(-0.12, 0.48), P(-0.38, 0.72), P(-0.52, 0.48), P(-0.42, 0.22)]
-    d.polygon(flame, fill=color)
+    d.polygon(flame, outline=color, fill=None, width=line_width)
 
     # Window (circle near nose)
     r = 0.12 * s
-    d.ellipse([cx + 0.28 * s - r, cy - 0.28 * s - r, cx + 0.28 * s + r, cy - 0.28 * s + r], fill=BLUE)
-    # Window inner ring
-    r2 = 0.055 * s
-    d.ellipse([cx + 0.28 * s - r2, cy - 0.28 * s - r2, cx + 0.28 * s + r2, cy - 0.28 * s + r2], fill=color)
+    d.ellipse([cx + 0.28 * s - r, cy - 0.28 * s - r, cx + 0.28 * s + r, cy - 0.28 * s + r], outline=color, fill=None, width=line_width)
 
 
 def make_icon(size, rocket_scale, corner_radius=None, path="icon.png"):
